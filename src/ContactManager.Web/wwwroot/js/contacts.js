@@ -5,12 +5,57 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const tableBody =
+        table.querySelector("#contactsTableBody");
+
+    const contactRows = Array.from(
+        table.querySelectorAll(
+            "tbody tr[data-contact-id]"
+        )
+    );
+
+    const noMatchesRow =
+        document.querySelector("#noClientMatchesRow");
+
+    const filterColumn =
+        document.querySelector("#clientFilterColumn");
+
+    const filterText =
+        document.querySelector("#clientFilterText");
+
+    const sortColumn =
+        document.querySelector("#clientSortColumn");
+
+    const sortDirection =
+        document.querySelector("#clientSortDirection");
+
+    const clearClientToolsButton =
+        document.querySelector("#clearClientTools");
+
+    const clientMatchCount =
+        document.querySelector("#clientMatchCount");
+
     const tokenInput = document.querySelector(
         "#ajaxAntiforgeryToken input[name='__RequestVerificationToken']"
     );
 
     const messageBox = document.querySelector(
         "#contactActionMessage"
+    );
+
+    const originalOrder = new Map(
+        contactRows.map((row, index) => [
+            row.dataset.contactId,
+            index
+        ])
+    );
+
+    const textCollator = new Intl.Collator(
+        undefined,
+        {
+            sensitivity: "base",
+            numeric: true
+        }
     );
 
     function showMessage(type, message) {
@@ -42,6 +87,194 @@ document.addEventListener("DOMContentLoaded", () => {
         return row.querySelector(
             `[data-display="${name}"]`
         );
+    }
+
+    function getMarriedText(row) {
+        return row.dataset.married === "true"
+            ? "yes true 1"
+            : "no false 0";
+    }
+
+    function getFilterValue(row, column) {
+        switch (column) {
+            case "name":
+                return row.dataset.name ?? "";
+
+            case "dateOfBirth":
+                return row.dataset.dateOfBirth ?? "";
+
+            case "married":
+                return getMarriedText(row);
+
+            case "phone":
+                return row.dataset.phone ?? "";
+
+            case "salary":
+                return row.dataset.salary ?? "";
+
+            case "all":
+            default:
+                return [
+                    row.dataset.name ?? "",
+                    row.dataset.dateOfBirth ?? "",
+                    getMarriedText(row),
+                    row.dataset.phone ?? "",
+                    row.dataset.salary ?? ""
+                ].join(" ");
+        }
+    }
+
+    function getSortValue(row, column) {
+        switch (column) {
+            case "salary":
+                return Number(row.dataset.salary);
+
+            case "married":
+                return row.dataset.married === "true"
+                    ? 1
+                    : 0;
+
+            case "dateOfBirth":
+                return row.dataset.dateOfBirth ?? "";
+
+            case "phone":
+                return row.dataset.phone ?? "";
+
+            case "name":
+            default:
+                return row.dataset.name ?? "";
+        }
+    }
+
+    function compareRows(firstRow, secondRow, column) {
+        const firstValue =
+            getSortValue(firstRow, column);
+
+        const secondValue =
+            getSortValue(secondRow, column);
+
+        if (
+            column === "salary" ||
+            column === "married"
+        ) {
+            return firstValue - secondValue;
+        }
+
+        return textCollator.compare(
+            String(firstValue),
+            String(secondValue)
+        );
+    }
+
+    function applyClientTools() {
+        if (!tableBody) {
+            return;
+        }
+
+        const selectedFilterColumn =
+            filterColumn?.value ?? "all";
+
+        const searchText =
+            (filterText?.value ?? "")
+                .trim()
+                .toLocaleLowerCase();
+
+        const selectedSortColumn =
+            sortColumn?.value ?? "";
+
+        const selectedSortDirection =
+            sortDirection?.value ?? "asc";
+
+        const sortedRows = [...contactRows];
+
+        if (selectedSortColumn) {
+            sortedRows.sort((firstRow, secondRow) => {
+                const comparison =
+                    compareRows(
+                        firstRow,
+                        secondRow,
+                        selectedSortColumn
+                    );
+
+                return selectedSortDirection === "desc"
+                    ? -comparison
+                    : comparison;
+            });
+        } else {
+            sortedRows.sort(
+                (firstRow, secondRow) =>
+                    originalOrder.get(
+                        firstRow.dataset.contactId
+                    ) -
+                    originalOrder.get(
+                        secondRow.dataset.contactId
+                    )
+            );
+        }
+
+        sortedRows.forEach(row => {
+            tableBody.appendChild(row);
+        });
+
+        if (noMatchesRow) {
+            tableBody.appendChild(noMatchesRow);
+        }
+
+        let matchCount = 0;
+
+        contactRows.forEach(row => {
+            const filterValue =
+                getFilterValue(
+                    row,
+                    selectedFilterColumn
+                )
+                .toLocaleLowerCase();
+
+            const isMatch =
+                searchText.length === 0 ||
+                filterValue.includes(searchText);
+
+            row.classList.toggle(
+                "d-none",
+                !isMatch
+            );
+
+            if (isMatch) {
+                matchCount++;
+            }
+        });
+
+        if (noMatchesRow) {
+            noMatchesRow.classList.toggle(
+                "d-none",
+                matchCount !== 0
+            );
+        }
+
+        if (clientMatchCount) {
+            clientMatchCount.textContent =
+                `${matchCount} of ${contactRows.length} rows match`;
+        }
+    }
+
+    function resetClientTools() {
+        if (filterColumn) {
+            filterColumn.value = "all";
+        }
+
+        if (filterText) {
+            filterText.value = "";
+        }
+
+        if (sortColumn) {
+            sortColumn.value = "";
+        }
+
+        if (sortDirection) {
+            sortDirection.value = "asc";
+        }
+
+        applyClientTools();
     }
 
     function restoreInputs(row) {
@@ -144,7 +377,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         } else {
             const selectedDate =
-                new Date(`${contact.dateOfBirth}T00:00:00`);
+                new Date(
+                    `${contact.dateOfBirth}T00:00:00`
+                );
 
             const today = new Date();
 
@@ -183,6 +418,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function saveContact(row, button) {
         clearMessage();
 
+        const rawSalary =
+            getInput(row, "salary")
+                .value
+                .trim();
+
         const contact = {
             id: Number(row.dataset.contactId),
 
@@ -204,16 +444,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     .value
                     .trim(),
 
-            salary: (() => {
-                const rawSalary =
-                    getInput(row, "salary")
-                        .value
-                        .trim();
-
-                return rawSalary === ""
+            salary:
+                rawSalary === ""
                     ? Number.NaN
-                    : Number(rawSalary);
-            })()
+                    : Number(rawSalary)
         };
 
         const validationErrors =
@@ -320,6 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 contact.salary.toFixed(2);
 
             exitEditMode(row);
+            applyClientTools();
 
             showMessage(
                 "success",
@@ -415,6 +650,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    filterColumn?.addEventListener(
+        "change",
+        applyClientTools
+    );
+
+    filterText?.addEventListener(
+        "input",
+        applyClientTools
+    );
+
+    sortColumn?.addEventListener(
+        "change",
+        applyClientTools
+    );
+
+    sortDirection?.addEventListener(
+        "change",
+        applyClientTools
+    );
+
+    clearClientToolsButton?.addEventListener(
+        "click",
+        resetClientTools
+    );
+
     table.addEventListener(
         "click",
         async event => {
@@ -479,4 +739,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     );
+
+    applyClientTools();
 });

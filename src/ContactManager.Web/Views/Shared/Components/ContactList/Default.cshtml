@@ -82,6 +82,110 @@
     </form>
 </div>
 
+@if (result.Items.Count > 0)
+{
+    <div class="card border-0 bg-light mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-xl-row justify-content-between gap-2 mb-3">
+                <div>
+                    <h2 class="h6 mb-1">
+                        Client-side table tools
+                    </h2>
+
+                    <div class="small text-muted">
+                        JavaScript filters and sorts the rows already loaded on this server page.
+                    </div>
+                </div>
+
+                <div
+                    id="clientMatchCount"
+                    class="small text-muted align-self-xl-center">
+                    @result.Items.Count of @result.Items.Count rows match
+                </div>
+            </div>
+
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label
+                        for="clientFilterColumn"
+                        class="form-label">
+                        Filter column
+                    </label>
+
+                    <select
+                        id="clientFilterColumn"
+                        class="form-select">
+                        <option value="all">All columns</option>
+                        <option value="name">Name</option>
+                        <option value="dateOfBirth">Date of birth</option>
+                        <option value="married">Married</option>
+                        <option value="phone">Phone</option>
+                        <option value="salary">Salary</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label
+                        for="clientFilterText"
+                        class="form-label">
+                        Search
+                    </label>
+
+                    <input
+                        id="clientFilterText"
+                        type="search"
+                        class="form-control"
+                        autocomplete="off"
+                        placeholder="Type to filter this page..." />
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label
+                        for="clientSortColumn"
+                        class="form-label">
+                        Client sort
+                    </label>
+
+                    <select
+                        id="clientSortColumn"
+                        class="form-select">
+                        <option value="">Server order</option>
+                        <option value="name">Name</option>
+                        <option value="dateOfBirth">Date of birth</option>
+                        <option value="married">Married</option>
+                        <option value="phone">Phone</option>
+                        <option value="salary">Salary</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label
+                        for="clientSortDirection"
+                        class="form-label">
+                        Direction
+                    </label>
+
+                    <select
+                        id="clientSortDirection"
+                        class="form-select">
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-1 d-grid">
+                    <button
+                        id="clearClientTools"
+                        type="button"
+                        class="btn btn-outline-secondary">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div
     id="contactActionMessage"
     class="alert d-none"
@@ -174,7 +278,7 @@ else
                 </tr>
             </thead>
 
-            <tbody>
+            <tbody id="contactsTableBody">
                 @foreach (var contact in result.Items)
                 {
                     <tr
@@ -299,6 +403,16 @@ else
                         </td>
                     </tr>
                 }
+
+                <tr
+                    id="noClientMatchesRow"
+                    class="d-none">
+                    <td
+                        colspan="6"
+                        class="text-center text-muted py-4">
+                        No rows on this page match the client-side filter.
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
