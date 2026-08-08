@@ -4,5 +4,6 @@ namespace ContactManager.Web.Data.Repositories;
 
 public interface IContactRepository
 {
-    Task<IReadOnlyList<Contact>> GetAllAsync();
+    Task<PagedResult<Contact>> GetPagedAsync(
+        ContactQueryParameters parameters);
 }

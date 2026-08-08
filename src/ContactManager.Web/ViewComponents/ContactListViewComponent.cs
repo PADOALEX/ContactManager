@@ -1,4 +1,5 @@
 using ContactManager.Web.Data.Repositories;
+using ContactManager.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContactManager.Web.ViewComponents;
@@ -13,10 +14,18 @@ public sealed class ContactListViewComponent : ViewComponent
         _contactRepository = contactRepository;
     }
 
-    public async Task<IViewComponentResult> InvokeAsync()
+    public async Task<IViewComponentResult> InvokeAsync(
+        ContactQueryParameters query)
     {
-        var contacts = await _contactRepository.GetAllAsync();
+        var result =
+            await _contactRepository.GetPagedAsync(query);
 
-        return View(contacts);
+        var viewModel = new ContactListViewModel
+        {
+            Result = result,
+            Query = query
+        };
+
+        return View(viewModel);
     }
 }

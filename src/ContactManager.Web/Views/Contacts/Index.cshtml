@@ -1,3 +1,5 @@
+@model ContactManager.Web.Models.ContactQueryParameters
+
 @{
     ViewData["Title"] = "Contact Manager";
 }
@@ -14,6 +16,8 @@
         </p>
     </div>
 
-    @await Component.InvokeAsync("ContactList")
+    @await Component.InvokeAsync(
+        "ContactList",
+        new { query = Model })
 
 </div>

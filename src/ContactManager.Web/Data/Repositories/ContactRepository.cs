@@ -12,9 +12,49 @@ public sealed class ContactRepository : IContactRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<Contact>> GetAllAsync()
+    public async Task<PagedResult<Contact>> GetPagedAsync(
+        ContactQueryParameters parameters)
     {
-        const string sql = """
+        var pageSize = Math.Clamp(parameters.PageSize, 1, 100);
+
+        var sortColumn = GetSortColumn(parameters.SortBy);
+
+        var sortDirection =
+            parameters.SortDirection == SortDirection.Asc
+                ? "ASC"
+                : "DESC";
+
+        const string countSql = """
+            SELECT COUNT(*)
+            FROM dbo.Contacts;
+            """;
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        await connection.OpenAsync();
+
+        var totalCount =
+            await connection.ExecuteScalarAsync<int>(countSql);
+
+        var totalPages =
+            totalCount == 0
+                ? 1
+                : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var page = Math.Clamp(
+            parameters.Page,
+            1,
+            totalPages);
+
+        var offset = (page - 1) * pageSize;
+
+        var secondarySort =
+            parameters.SortBy == ContactSortColumn.Id
+                ? string.Empty
+                : ", Id DESC";
+
+        var sql = $"""
             SELECT
                 Id,
                 [Name],
@@ -23,15 +63,39 @@ public sealed class ContactRepository : IContactRepository
                 Phone,
                 Salary
             FROM dbo.Contacts
-            ORDER BY Id DESC;
+            ORDER BY {sortColumn} {sortDirection}{secondarySort}
+            OFFSET @Offset ROWS
+            FETCH NEXT @PageSize ROWS ONLY;
             """;
 
-        await using var connection = _connectionFactory.CreateConnection();
+        var contacts = await connection.QueryAsync<Contact>(
+            sql,
+            new
+            {
+                Offset = offset,
+                PageSize = pageSize
+            });
 
-        await connection.OpenAsync();
+        return new PagedResult<Contact>
+        {
+            Items = contacts.AsList(),
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
 
-        var contacts = await connection.QueryAsync<Contact>(sql);
-
-        return contacts.AsList();
+    private static string GetSortColumn(
+        ContactSortColumn sortBy)
+    {
+        return sortBy switch
+        {
+            ContactSortColumn.Name => "[Name]",
+            ContactSortColumn.DateOfBirth => "DateOfBirth",
+            ContactSortColumn.Married => "Married",
+            ContactSortColumn.Phone => "Phone",
+            ContactSortColumn.Salary => "Salary",
+            _ => "Id"
+        };
     }
 }
