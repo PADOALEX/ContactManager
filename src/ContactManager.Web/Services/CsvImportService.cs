@@ -81,7 +81,7 @@ public sealed class CsvImportService : ICsvImportService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var rowNumber = csv.Context.Parser.Row;
+                var rowNumber = csv.Context.Parser?.Row ?? 1;
 
                 var name = csv.GetField("Name")?.Trim();
                 var dateOfBirthRaw =
@@ -206,7 +206,7 @@ public sealed class CsvImportService : ICsvImportService
         {
             result.Errors.Add(new CsvImportError
             {
-                RowNumber = csv.Context.Parser.Row,
+                RowNumber = csv.Context.Parser?.Row ?? 1,
                 Message = "The CSV file has an invalid structure."
             });
         }

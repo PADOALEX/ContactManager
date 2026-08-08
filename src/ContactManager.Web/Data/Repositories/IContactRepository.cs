@@ -9,4 +9,8 @@ public interface IContactRepository
 
     Task<int> AddRangeAsync(
         IReadOnlyCollection<Contact> contacts);
+
+    Task<bool> UpdateAsync(Contact contact);
+
+    Task<bool> DeleteAsync(int id);
 }

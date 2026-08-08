@@ -1,4 +1,5 @@
 @using ContactManager.Web.Models
+@using System.Globalization
 @model ContactListViewModel
 
 @{
@@ -48,10 +49,8 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-
     <div class="text-muted">
-        Showing @startItem-@endItem
-        of @result.TotalCount contacts
+        Showing @startItem-@endItem of @result.TotalCount contacts
     </div>
 
     <form
@@ -60,24 +59,11 @@
         method="get"
         class="d-flex align-items-center gap-2">
 
-        <input
-            type="hidden"
-            name="page"
-            value="1" />
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="sortBy" value="@query.SortBy" />
+        <input type="hidden" name="sortDirection" value="@query.SortDirection" />
 
-        <input
-            type="hidden"
-            name="sortBy"
-            value="@query.SortBy" />
-
-        <input
-            type="hidden"
-            name="sortDirection"
-            value="@query.SortDirection" />
-
-        <label
-            for="pageSize"
-            class="form-label mb-0">
+        <label for="pageSize" class="form-label mb-0">
             Rows:
         </label>
 
@@ -87,35 +73,19 @@
             class="form-select form-select-sm"
             onchange="this.form.submit()">
 
-            <option value="2"
-                    selected="@(result.PageSize == 2)">
-                2
-            </option>
-
-            <option value="5"
-                    selected="@(result.PageSize == 5)">
-                5
-            </option>
-
-            <option value="10"
-                    selected="@(result.PageSize == 10)">
-                10
-            </option>
-
-            <option value="20"
-                    selected="@(result.PageSize == 20)">
-                20
-            </option>
-
-            <option value="50"
-                    selected="@(result.PageSize == 50)">
-                50
-            </option>
-
+            <option value="2" selected="@(result.PageSize == 2)">2</option>
+            <option value="5" selected="@(result.PageSize == 5)">5</option>
+            <option value="10" selected="@(result.PageSize == 10)">10</option>
+            <option value="20" selected="@(result.PageSize == 20)">20</option>
+            <option value="50" selected="@(result.PageSize == 50)">50</option>
         </select>
-
     </form>
+</div>
 
+<div
+    id="contactActionMessage"
+    class="alert d-none"
+    role="alert">
 </div>
 
 @if (result.Items.Count == 0)
@@ -127,12 +97,12 @@
 else
 {
     <div class="table-responsive">
-
-        <table class="table table-striped table-hover align-middle">
+        <table
+            id="contactsTable"
+            class="table table-striped table-hover align-middle">
 
             <thead>
                 <tr>
-
                     <th>
                         <a
                             asp-controller="Contacts"
@@ -142,9 +112,7 @@ else
                             asp-route-sortBy="Name"
                             asp-route-sortDirection="@NextDirection(ContactSortColumn.Name)"
                             class="text-decoration-none text-dark">
-
-                            Name@SortIndicator(ContactSortColumn.Name)
-
+                            Name@(SortIndicator(ContactSortColumn.Name))
                         </a>
                     </th>
 
@@ -157,9 +125,7 @@ else
                             asp-route-sortBy="DateOfBirth"
                             asp-route-sortDirection="@NextDirection(ContactSortColumn.DateOfBirth)"
                             class="text-decoration-none text-dark">
-
-                            Date of birth@SortIndicator(ContactSortColumn.DateOfBirth)
-
+                            Date of birth@(SortIndicator(ContactSortColumn.DateOfBirth))
                         </a>
                     </th>
 
@@ -172,9 +138,7 @@ else
                             asp-route-sortBy="Married"
                             asp-route-sortDirection="@NextDirection(ContactSortColumn.Married)"
                             class="text-decoration-none text-dark">
-
-                            Married@SortIndicator(ContactSortColumn.Married)
-
+                            Married@(SortIndicator(ContactSortColumn.Married))
                         </a>
                     </th>
 
@@ -187,9 +151,7 @@ else
                             asp-route-sortBy="Phone"
                             asp-route-sortDirection="@NextDirection(ContactSortColumn.Phone)"
                             class="text-decoration-none text-dark">
-
-                            Phone@SortIndicator(ContactSortColumn.Phone)
-
+                            Phone@(SortIndicator(ContactSortColumn.Phone))
                         </a>
                     </th>
 
@@ -202,48 +164,143 @@ else
                             asp-route-sortBy="Salary"
                             asp-route-sortDirection="@NextDirection(ContactSortColumn.Salary)"
                             class="text-decoration-none text-dark">
-
-                            Salary@SortIndicator(ContactSortColumn.Salary)
-
+                            Salary@(SortIndicator(ContactSortColumn.Salary))
                         </a>
                     </th>
 
+                    <th class="text-end">
+                        Actions
+                    </th>
                 </tr>
             </thead>
 
             <tbody>
-
                 @foreach (var contact in result.Items)
                 {
-                    <tr>
+                    <tr
+                        data-contact-id="@contact.Id"
+                        data-name="@contact.Name"
+                        data-date-of-birth="@contact.DateOfBirth.ToString("yyyy-MM-dd")"
+                        data-married="@(contact.Married ? "true" : "false")"
+                        data-phone="@contact.Phone"
+                        data-salary="@contact.Salary.ToString(CultureInfo.InvariantCulture)">
 
                         <td>
-                            @contact.Name
+                            <span
+                                class="view-value"
+                                data-display="name">
+                                @contact.Name
+                            </span>
+
+                            <input
+                                type="text"
+                                class="form-control form-control-sm edit-control d-none"
+                                data-input="name"
+                                maxlength="200"
+                                value="@contact.Name" />
                         </td>
 
                         <td>
-                            @contact.DateOfBirth.ToString("yyyy-MM-dd")
+                            <span
+                                class="view-value"
+                                data-display="dateOfBirth">
+                                @contact.DateOfBirth.ToString("yyyy-MM-dd")
+                            </span>
+
+                            <input
+                                type="date"
+                                class="form-control form-control-sm edit-control d-none"
+                                data-input="dateOfBirth"
+                                value="@contact.DateOfBirth.ToString("yyyy-MM-dd")"
+                                style="min-width: 145px;" />
                         </td>
 
                         <td>
-                            @(contact.Married ? "Yes" : "No")
+                            <span
+                                class="view-value"
+                                data-display="married">
+                                @(contact.Married ? "Yes" : "No")
+                            </span>
+
+                            <select
+                                class="form-select form-select-sm edit-control d-none"
+                                data-input="married"
+                                style="min-width: 90px;">
+                                <option value="true" selected="@contact.Married">Yes</option>
+                                <option value="false" selected="@(!contact.Married)">No</option>
+                            </select>
                         </td>
 
                         <td>
-                            @contact.Phone
+                            <span
+                                class="view-value"
+                                data-display="phone">
+                                @contact.Phone
+                            </span>
+
+                            <input
+                                type="text"
+                                class="form-control form-control-sm edit-control d-none"
+                                data-input="phone"
+                                maxlength="50"
+                                value="@contact.Phone"
+                                style="min-width: 170px;" />
                         </td>
 
                         <td>
-                            @contact.Salary.ToString("F2")
+                            <span
+                                class="view-value"
+                                data-display="salary">
+                                @contact.Salary.ToString(
+                                    "F2",
+                                    CultureInfo.InvariantCulture)
+                            </span>
+
+                            <input
+                                type="number"
+                                class="form-control form-control-sm edit-control d-none"
+                                data-input="salary"
+                                min="0"
+                                step="0.01"
+                                value="@contact.Salary.ToString(
+                                    "F2",
+                                    CultureInfo.InvariantCulture)"
+                                style="min-width: 130px;" />
                         </td>
 
+                        <td class="text-end text-nowrap">
+                            <div class="view-actions">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary edit-contact-btn">
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger delete-contact-btn">
+                                    Delete
+                                </button>
+                            </div>
+
+                            <div class="edit-actions d-none">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-success save-contact-btn">
+                                    Save
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary cancel-edit-btn">
+                                    Cancel
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 }
-
             </tbody>
-
         </table>
-
     </div>
 
     @if (result.TotalPages > 1)
@@ -253,10 +310,7 @@ else
             class="mt-3">
 
             <ul class="pagination">
-
-                <li class="page-item
-                    @(!result.HasPreviousPage ? "disabled" : "")">
-
+                <li class="page-item @(!result.HasPreviousPage ? "disabled" : "")">
                     <a
                         class="page-link"
                         asp-controller="Contacts"
@@ -265,20 +319,15 @@ else
                         asp-route-pageSize="@result.PageSize"
                         asp-route-sortBy="@query.SortBy"
                         asp-route-sortDirection="@query.SortDirection">
-
                         Previous
-
                     </a>
-
                 </li>
 
                 @for (var pageNumber = startPage;
                       pageNumber <= endPage;
                       pageNumber++)
                 {
-                    <li class="page-item
-                        @(pageNumber == result.Page ? "active" : "")">
-
+                    <li class="page-item @(pageNumber == result.Page ? "active" : "")">
                         <a
                             class="page-link"
                             asp-controller="Contacts"
@@ -287,17 +336,12 @@ else
                             asp-route-pageSize="@result.PageSize"
                             asp-route-sortBy="@query.SortBy"
                             asp-route-sortDirection="@query.SortDirection">
-
                             @pageNumber
-
                         </a>
-
                     </li>
                 }
 
-                <li class="page-item
-                    @(!result.HasNextPage ? "disabled" : "")">
-
+                <li class="page-item @(!result.HasNextPage ? "disabled" : "")">
                     <a
                         class="page-link"
                         asp-controller="Contacts"
@@ -306,15 +350,10 @@ else
                         asp-route-pageSize="@result.PageSize"
                         asp-route-sortBy="@query.SortBy"
                         asp-route-sortDirection="@query.SortDirection">
-
                         Next
-
                     </a>
-
                 </li>
-
             </ul>
-
         </nav>
     }
 }

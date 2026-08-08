@@ -138,6 +138,52 @@ public sealed class ContactRepository : IContactRepository
         throw;
     }
 }
+public async Task<bool> UpdateAsync(Contact contact)
+{
+    const string sql = """
+        UPDATE dbo.Contacts
+        SET
+            [Name] = @Name,
+            DateOfBirth = @DateOfBirth,
+            Married = @Married,
+            Phone = @Phone,
+            Salary = @Salary
+        WHERE Id = @Id;
+        """;
+
+    await using var connection =
+        _connectionFactory.CreateConnection();
+
+    await connection.OpenAsync();
+
+    var affectedRows =
+        await connection.ExecuteAsync(
+            sql,
+            contact);
+
+    return affectedRows == 1;
+}
+public async Task<bool> DeleteAsync(int id)
+{
+    const string sql = """
+        DELETE FROM dbo.Contacts
+        WHERE Id = @Id;
+        """;
+
+    await using var connection =
+        _connectionFactory.CreateConnection();
+
+    await connection.OpenAsync();
+
+    var affectedRows =
+        await connection.ExecuteAsync(
+            sql,
+            new { Id = id });
+
+    return affectedRows == 1;
+}
+
+
 
     private static string GetSortColumn(
         ContactSortColumn sortBy)

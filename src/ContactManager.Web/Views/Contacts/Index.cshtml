@@ -116,9 +116,20 @@
         </div>
 
     </div>
+        <div id="ajaxAntiforgeryToken" class="d-none">
+        @Html.AntiForgeryToken()
+    </div>
 
     @await Component.InvokeAsync(
         "ContactList",
         new { query = Model.Query })
 
 </div>
+
+@section Scripts
+{
+    <script
+        src="~/js/contacts.js"
+        asp-append-version="true">
+    </script>
+}

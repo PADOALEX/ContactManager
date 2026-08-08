@@ -115,4 +115,154 @@ public sealed class ContactsController : Controller
             });
         }
     }
+    [HttpPut]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Update(
+    [FromBody] ContactUpdateRequest? request)
+{
+    if (request is null)
+    {
+        return BadRequest(new
+        {
+            message = "Invalid request."
+        });
+    }
+
+    if (request.DateOfBirth.HasValue &&
+        request.DateOfBirth.Value.Date > DateTime.Today)
+    {
+        ModelState.AddModelError(
+            nameof(request.DateOfBirth),
+            "Date of birth cannot be in the future.");
+    }
+
+    if (request.Salary.HasValue &&
+        decimal.Round(request.Salary.Value, 2)
+            != request.Salary.Value)
+    {
+        ModelState.AddModelError(
+            nameof(request.Salary),
+            "Salary can contain at most 2 decimal places.");
+    }
+
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(new
+        {
+            message = "Validation failed.",
+
+            errors = ModelState
+                .Where(entry =>
+                    entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors
+                        .Select(error =>
+                            string.IsNullOrWhiteSpace(
+                                error.ErrorMessage)
+                                ? "Invalid value."
+                                : error.ErrorMessage)
+                        .ToArray())
+        });
+    }
+
+    var contact = new Contact
+    {
+        Id = request.Id,
+        Name = request.Name.Trim(),
+        DateOfBirth = request.DateOfBirth!.Value.Date,
+        Married = request.Married,
+        Phone = request.Phone.Trim(),
+        Salary = request.Salary!.Value
+    };
+
+    try
+    {
+        var updated =
+            await _contactRepository.UpdateAsync(contact);
+
+        if (!updated)
+        {
+            return NotFound(new
+            {
+                message = "Contact was not found."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Contact updated successfully."
+        });
+    }
+    catch (Exception exception)
+    {
+        _logger.LogError(
+            exception,
+            "Failed to update contact {ContactId}.",
+            request.Id);
+
+        return StatusCode(
+            StatusCodes.Status500InternalServerError,
+            new
+            {
+                message =
+                    "An unexpected error occurred while updating the contact."
+            });
+    }
+}
+[HttpDelete]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Delete(
+    [FromBody] DeleteContactRequest? request)
+{
+    if (request is null)
+    {
+        return BadRequest(new
+        {
+            message = "Invalid request."
+        });
+    }
+
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(new
+        {
+            message = "Invalid contact id."
+        });
+    }
+
+    try
+    {
+        var deleted =
+            await _contactRepository.DeleteAsync(request.Id);
+
+        if (!deleted)
+        {
+            return NotFound(new
+            {
+                message = "Contact was not found."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Contact deleted successfully."
+        });
+    }
+    catch (Exception exception)
+    {
+        _logger.LogError(
+            exception,
+            "Failed to delete contact {ContactId}.",
+            request.Id);
+
+        return StatusCode(
+            StatusCodes.Status500InternalServerError,
+            new
+            {
+                message =
+                    "An unexpected error occurred while deleting the contact."
+            });
+    }
+}
 }
