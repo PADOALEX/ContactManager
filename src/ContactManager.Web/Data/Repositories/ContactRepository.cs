@@ -84,6 +84,60 @@ public sealed class ContactRepository : IContactRepository
             TotalCount = totalCount
         };
     }
+    public async Task<int> AddRangeAsync(
+    IReadOnlyCollection<Contact> contacts)
+{
+    if (contacts.Count == 0)
+    {
+        return 0;
+    }
+
+    const string sql = """
+        INSERT INTO dbo.Contacts
+        (
+            [Name],
+            DateOfBirth,
+            Married,
+            Phone,
+            Salary
+        )
+        VALUES
+        (
+            @Name,
+            @DateOfBirth,
+            @Married,
+            @Phone,
+            @Salary
+        );
+        """;
+
+    await using var connection =
+        _connectionFactory.CreateConnection();
+
+    await connection.OpenAsync();
+
+    await using var transaction =
+        await connection.BeginTransactionAsync();
+
+    try
+    {
+        var insertedCount =
+            await connection.ExecuteAsync(
+                sql,
+                contacts,
+                transaction);
+
+        await transaction.CommitAsync();
+
+        return insertedCount;
+    }
+    catch
+    {
+        await transaction.RollbackAsync();
+
+        throw;
+    }
+}
 
     private static string GetSortColumn(
         ContactSortColumn sortBy)

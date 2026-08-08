@@ -1,0 +1,6 @@
+Name,Date of birth,Married,Phone,Salary
+Valid Person,1995-05-10,true,+380991111111,2500.00
+,1997-08-20,false,+380992222222,1800.00
+Future Person,2099-01-01,false,+380993333333,2200.00
+Bad Married,1998-03-11,maybe,+380994444444,3100.00
+Bad Salary,2001-09-15,true,+380995555555,hello

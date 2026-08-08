@@ -6,4 +6,7 @@ public interface IContactRepository
 {
     Task<PagedResult<Contact>> GetPagedAsync(
         ContactQueryParameters parameters);
+
+    Task<int> AddRangeAsync(
+        IReadOnlyCollection<Contact> contacts);
 }

@@ -1,4 +1,4 @@
-@model ContactManager.Web.Models.ContactQueryParameters
+@model ContactManager.Web.Models.ContactsIndexViewModel
 
 @{
     ViewData["Title"] = "Contact Manager";
@@ -12,12 +12,113 @@
         </h1>
 
         <p class="text-muted">
-            Manage contacts imported from CSV files.
+            Upload CSV files and manage stored contacts.
         </p>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    @if (Model.ImportErrors.Count > 0)
+    {
+        <div class="alert alert-danger">
+
+            <h5 class="alert-heading">
+                CSV import failed
+            </h5>
+
+            <p>
+                Fix the following errors and try again:
+            </p>
+
+            <ul class="mb-0">
+                @foreach (var error in Model.ImportErrors)
+                {
+                    <li>
+                        Row @error.RowNumber:
+                        @error.Message
+                    </li>
+                }
+            </ul>
+
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h2 class="h5 mb-3">
+                Import contacts
+            </h2>
+
+            <form
+                asp-controller="Contacts"
+                asp-action="Import"
+                method="post"
+                enctype="multipart/form-data">
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-9">
+
+                        <label
+                            for="csvFile"
+                            class="form-label">
+
+                            CSV file
+
+                        </label>
+
+                        <input
+                            id="csvFile"
+                            name="file"
+                            type="file"
+                            accept=".csv,text/csv"
+                            class="form-control"
+                            required />
+
+                        <div class="form-text">
+                            Required columns:
+                            Name, Date of birth, Married,
+                            Phone, Salary.
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100">
+
+                            Upload CSV
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
     </div>
 
     @await Component.InvokeAsync(
         "ContactList",
-        new { query = Model })
+        new { query = Model.Query })
 
 </div>
