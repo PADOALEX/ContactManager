@@ -68,13 +68,14 @@ public sealed class ContactRepository : IContactRepository
             FETCH NEXT @PageSize ROWS ONLY;
             """;
 
-        var contacts = await connection.QueryAsync<Contact>(
-            sql,
-            new
-            {
-                Offset = offset,
-                PageSize = pageSize
-            });
+        var contacts =
+            await connection.QueryAsync<Contact>(
+                sql,
+                new
+                {
+                    Offset = offset,
+                    PageSize = pageSize
+                });
 
         return new PagedResult<Contact>
         {
@@ -84,106 +85,107 @@ public sealed class ContactRepository : IContactRepository
             TotalCount = totalCount
         };
     }
+
     public async Task<int> AddRangeAsync(
-    IReadOnlyCollection<Contact> contacts)
-{
-    if (contacts.Count == 0)
+        IReadOnlyCollection<Contact> contacts)
     {
-        return 0;
+        if (contacts.Count == 0)
+        {
+            return 0;
+        }
+
+        const string sql = """
+            INSERT INTO dbo.Contacts
+            (
+                [Name],
+                DateOfBirth,
+                Married,
+                Phone,
+                Salary
+            )
+            VALUES
+            (
+                @Name,
+                @DateOfBirth,
+                @Married,
+                @Phone,
+                @Salary
+            );
+            """;
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        await connection.OpenAsync();
+
+        await using var transaction =
+            await connection.BeginTransactionAsync();
+
+        try
+        {
+            var insertedCount =
+                await connection.ExecuteAsync(
+                    sql,
+                    contacts,
+                    transaction);
+
+            await transaction.CommitAsync();
+
+            return insertedCount;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
-    const string sql = """
-        INSERT INTO dbo.Contacts
-        (
-            [Name],
-            DateOfBirth,
-            Married,
-            Phone,
-            Salary
-        )
-        VALUES
-        (
-            @Name,
-            @DateOfBirth,
-            @Married,
-            @Phone,
-            @Salary
-        );
-        """;
-
-    await using var connection =
-        _connectionFactory.CreateConnection();
-
-    await connection.OpenAsync();
-
-    await using var transaction =
-        await connection.BeginTransactionAsync();
-
-    try
+    public async Task<bool> UpdateAsync(Contact contact)
     {
-        var insertedCount =
+        const string sql = """
+            UPDATE dbo.Contacts
+            SET
+                [Name] = @Name,
+                DateOfBirth = @DateOfBirth,
+                Married = @Married,
+                Phone = @Phone,
+                Salary = @Salary
+            WHERE Id = @Id;
+            """;
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        await connection.OpenAsync();
+
+        var affectedRows =
             await connection.ExecuteAsync(
                 sql,
-                contacts,
-                transaction);
+                contact);
 
-        await transaction.CommitAsync();
-
-        return insertedCount;
+        return affectedRows == 1;
     }
-    catch
+
+    public async Task<bool> DeleteAsync(int id)
     {
-        await transaction.RollbackAsync();
+        const string sql = """
+            DELETE FROM dbo.Contacts
+            WHERE Id = @Id;
+            """;
 
-        throw;
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        await connection.OpenAsync();
+
+        var affectedRows =
+            await connection.ExecuteAsync(
+                sql,
+                new { Id = id });
+
+        return affectedRows == 1;
     }
-}
-public async Task<bool> UpdateAsync(Contact contact)
-{
-    const string sql = """
-        UPDATE dbo.Contacts
-        SET
-            [Name] = @Name,
-            DateOfBirth = @DateOfBirth,
-            Married = @Married,
-            Phone = @Phone,
-            Salary = @Salary
-        WHERE Id = @Id;
-        """;
-
-    await using var connection =
-        _connectionFactory.CreateConnection();
-
-    await connection.OpenAsync();
-
-    var affectedRows =
-        await connection.ExecuteAsync(
-            sql,
-            contact);
-
-    return affectedRows == 1;
-}
-public async Task<bool> DeleteAsync(int id)
-{
-    const string sql = """
-        DELETE FROM dbo.Contacts
-        WHERE Id = @Id;
-        """;
-
-    await using var connection =
-        _connectionFactory.CreateConnection();
-
-    await connection.OpenAsync();
-
-    var affectedRows =
-        await connection.ExecuteAsync(
-            sql,
-            new { Id = id });
-
-    return affectedRows == 1;
-}
-
-
 
     private static string GetSortColumn(
         ContactSortColumn sortBy)
