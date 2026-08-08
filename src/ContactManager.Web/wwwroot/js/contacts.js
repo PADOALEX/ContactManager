@@ -58,12 +58,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     );
 
+    const salaryFormatter = new Intl.NumberFormat(
+        "en-US",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    );
+
     function showMessage(type, message) {
         if (!messageBox) {
             return;
         }
 
-        messageBox.className = `alert alert-${type}`;
+        messageBox.className = `alert app-action-message alert-${type}`;
         messageBox.textContent = message;
         messageBox.classList.remove("d-none");
     }
@@ -565,7 +573,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 row,
                 "salary"
             ).textContent =
-                contact.salary.toFixed(2);
+                salaryFormatter.format(contact.salary);
 
             exitEditMode(row);
             applyClientTools();
@@ -658,7 +666,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 "danger",
                 "Unable to connect to the server."
             );
-
+        }
+        finally {
             button.disabled = false;
             button.textContent = "Delete";
         }

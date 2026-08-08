@@ -21,9 +21,5 @@ public sealed class ContactUpdateRequest
     public string Phone { get; set; } = string.Empty;
 
     [Required]
-    [Range(
-        typeof(decimal),
-        "0",
-        "9999999999999999.99")]
     public decimal? Salary { get; set; }
 }

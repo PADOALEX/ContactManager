@@ -7,6 +7,8 @@ namespace ContactManager.Web.Services;
 
 public sealed class CsvImportService : ICsvImportService
 {
+    private const decimal MaxSalary = 9999999999999999.99m;
+
     private static readonly string[] RequiredHeaders =
     [
         "Name",
@@ -31,12 +33,12 @@ public sealed class CsvImportService : ICsvImportService
         using var stream = file.OpenReadStream();
         using var reader = new StreamReader(stream);
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            TrimOptions = TrimOptions.Trim,
-            IgnoreBlankLines = true,
-            BadDataFound = null
-        };
+        var configuration =
+            new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                TrimOptions = TrimOptions.Trim,
+                IgnoreBlankLines = true
+            };
 
         using var csv = new CsvReader(reader, configuration);
 
@@ -57,11 +59,21 @@ public sealed class CsvImportService : ICsvImportService
 
             var headers = csv.HeaderRecord ?? [];
 
+            if (headers.Length !=
+                headers.Distinct(StringComparer.Ordinal).Count())
+            {
+                result.Errors.Add(new CsvImportError
+                {
+                    RowNumber = 1,
+                    Message = "CSV contains duplicate column names."
+                });
+            }
+
             foreach (var requiredHeader in RequiredHeaders)
             {
                 if (!headers.Contains(
                         requiredHeader,
-                        StringComparer.OrdinalIgnoreCase))
+                        StringComparer.Ordinal))
                 {
                     result.Errors.Add(new CsvImportError
                     {
@@ -81,15 +93,21 @@ public sealed class CsvImportService : ICsvImportService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var rowNumber = csv.Context.Parser?.Row ?? 1;
+                var rowNumber =
+                    csv.Context.Parser?.Row ?? 1;
 
-                var name = csv.GetField("Name")?.Trim();
+                var name =
+                    csv.GetField("Name")?.Trim();
+
                 var dateOfBirthRaw =
                     csv.GetField("Date of birth")?.Trim();
+
                 var marriedRaw =
                     csv.GetField("Married")?.Trim();
+
                 var phone =
                     csv.GetField("Phone")?.Trim();
+
                 var salaryRaw =
                     csv.GetField("Salary")?.Trim();
 
@@ -186,6 +204,24 @@ public sealed class CsvImportService : ICsvImportService
 
                     rowHasErrors = true;
                 }
+                else if (salary > MaxSalary)
+                {
+                    AddError(
+                        result,
+                        rowNumber,
+                        "Salary exceeds the supported database range.");
+
+                    rowHasErrors = true;
+                }
+                else if (decimal.Round(salary, 2) != salary)
+                {
+                    AddError(
+                        result,
+                        rowNumber,
+                        "Salary can contain at most 2 decimal places.");
+
+                    rowHasErrors = true;
+                }
 
                 if (rowHasErrors)
                 {
@@ -206,8 +242,10 @@ public sealed class CsvImportService : ICsvImportService
         {
             result.Errors.Add(new CsvImportError
             {
-                RowNumber = csv.Context.Parser?.Row ?? 1,
-                Message = "The CSV file has an invalid structure."
+                RowNumber =
+                    csv.Context.Parser?.Row ?? 1,
+                Message =
+                    "The CSV file has an invalid structure."
             });
         }
 
@@ -254,19 +292,29 @@ public sealed class CsvImportService : ICsvImportService
         string? value,
         out decimal result)
     {
-        if (decimal.TryParse(
-                value,
-                NumberStyles.Number,
-                CultureInfo.InvariantCulture,
-                out result))
+        result = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
         {
-            return true;
+            return false;
+        }
+
+        var normalized = value.Trim();
+
+        if (normalized.Contains(',') &&
+            !normalized.Contains('.'))
+        {
+            return decimal.TryParse(
+                normalized,
+                NumberStyles.Number,
+                CultureInfo.GetCultureInfo("uk-UA"),
+                out result);
         }
 
         return decimal.TryParse(
-            value,
+            normalized,
             NumberStyles.Number,
-            CultureInfo.GetCultureInfo("uk-UA"),
+            CultureInfo.InvariantCulture,
             out result);
     }
 

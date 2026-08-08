@@ -8,6 +8,7 @@ namespace ContactManager.Web.Controllers;
 public sealed class ContactsController : Controller
 {
     private const long MaxCsvFileSize = 5 * 1024 * 1024;
+    private const decimal MaxSalary = 9999999999999999.99m;
 
     private readonly ICsvImportService _csvImportService;
     private readonly IContactRepository _contactRepository;
@@ -69,10 +70,32 @@ public sealed class ContactsController : Controller
             });
         }
 
-        var importResult =
-            await _csvImportService.ParseAsync(
+        CsvImportResult importResult;
+
+        try
+        {
+            importResult = await _csvImportService.ParseAsync(
                 file,
                 cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "An error occurred while reading CSV file {FileName}.",
+                file.FileName);
+
+            return View("Index", new ContactsIndexViewModel
+            {
+                ErrorMessage =
+                    "The CSV file could not be read. Check its format and try again."
+            });
+        }
 
         if (!importResult.IsValid)
         {
@@ -106,7 +129,7 @@ public sealed class ContactsController : Controller
         {
             _logger.LogError(
                 exception,
-                "An error occurred while importing contacts.");
+                "An error occurred while saving imported contacts.");
 
             return View("Index", new ContactsIndexViewModel
             {
@@ -115,154 +138,169 @@ public sealed class ContactsController : Controller
             });
         }
     }
+
     [HttpPut]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Update(
-    [FromBody] ContactUpdateRequest? request)
-{
-    if (request is null)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Update(
+        [FromBody] ContactUpdateRequest? request)
     {
-        return BadRequest(new
+        if (request is null)
         {
-            message = "Invalid request."
-        });
-    }
-
-    if (request.DateOfBirth.HasValue &&
-        request.DateOfBirth.Value.Date > DateTime.Today)
-    {
-        ModelState.AddModelError(
-            nameof(request.DateOfBirth),
-            "Date of birth cannot be in the future.");
-    }
-
-    if (request.Salary.HasValue &&
-        decimal.Round(request.Salary.Value, 2)
-            != request.Salary.Value)
-    {
-        ModelState.AddModelError(
-            nameof(request.Salary),
-            "Salary can contain at most 2 decimal places.");
-    }
-
-    if (!ModelState.IsValid)
-    {
-        return BadRequest(new
-        {
-            message = "Validation failed.",
-
-            errors = ModelState
-                .Where(entry =>
-                    entry.Value?.Errors.Count > 0)
-                .ToDictionary(
-                    entry => entry.Key,
-                    entry => entry.Value!.Errors
-                        .Select(error =>
-                            string.IsNullOrWhiteSpace(
-                                error.ErrorMessage)
-                                ? "Invalid value."
-                                : error.ErrorMessage)
-                        .ToArray())
-        });
-    }
-
-    var contact = new Contact
-    {
-        Id = request.Id,
-        Name = request.Name.Trim(),
-        DateOfBirth = request.DateOfBirth!.Value.Date,
-        Married = request.Married,
-        Phone = request.Phone.Trim(),
-        Salary = request.Salary!.Value
-    };
-
-    try
-    {
-        var updated =
-            await _contactRepository.UpdateAsync(contact);
-
-        if (!updated)
-        {
-            return NotFound(new
+            return BadRequest(new
             {
-                message = "Contact was not found."
+                message = "Invalid request."
             });
         }
 
-        return Ok(new
+        if (request.DateOfBirth.HasValue &&
+            request.DateOfBirth.Value.Date > DateTime.Today)
         {
-            message = "Contact updated successfully."
-        });
-    }
-    catch (Exception exception)
-    {
-        _logger.LogError(
-            exception,
-            "Failed to update contact {ContactId}.",
-            request.Id);
+            ModelState.AddModelError(
+                nameof(request.DateOfBirth),
+                "Date of birth cannot be in the future.");
+        }
 
-        return StatusCode(
-            StatusCodes.Status500InternalServerError,
-            new
+        if (request.Salary.HasValue)
+        {
+            if (request.Salary.Value < 0)
             {
-                message =
-                    "An unexpected error occurred while updating the contact."
-            });
-    }
-}
-[HttpDelete]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Delete(
-    [FromBody] DeleteContactRequest? request)
-{
-    if (request is null)
-    {
-        return BadRequest(new
-        {
-            message = "Invalid request."
-        });
-    }
-
-    if (!ModelState.IsValid)
-    {
-        return BadRequest(new
-        {
-            message = "Invalid contact id."
-        });
-    }
-
-    try
-    {
-        var deleted =
-            await _contactRepository.DeleteAsync(request.Id);
-
-        if (!deleted)
-        {
-            return NotFound(new
+                ModelState.AddModelError(
+                    nameof(request.Salary),
+                    "Salary cannot be negative.");
+            }
+            else if (request.Salary.Value > MaxSalary)
             {
-                message = "Contact was not found."
+                ModelState.AddModelError(
+                    nameof(request.Salary),
+                    "Salary exceeds the supported database range.");
+            }
+            else if (decimal.Round(request.Salary.Value, 2)
+                != request.Salary.Value)
+            {
+                ModelState.AddModelError(
+                    nameof(request.Salary),
+                    "Salary can contain at most 2 decimal places.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Validation failed.",
+                errors = ModelState
+                    .Where(entry =>
+                        entry.Value?.Errors.Count > 0)
+                    .ToDictionary(
+                        entry => entry.Key,
+                        entry => entry.Value!.Errors
+                            .Select(error =>
+                                string.IsNullOrWhiteSpace(
+                                    error.ErrorMessage)
+                                    ? "Invalid value."
+                                    : error.ErrorMessage)
+                            .ToArray())
             });
         }
 
-        return Ok(new
+        var contact = new Contact
         {
-            message = "Contact deleted successfully."
-        });
-    }
-    catch (Exception exception)
-    {
-        _logger.LogError(
-            exception,
-            "Failed to delete contact {ContactId}.",
-            request.Id);
+            Id = request.Id,
+            Name = request.Name.Trim(),
+            DateOfBirth = request.DateOfBirth!.Value.Date,
+            Married = request.Married,
+            Phone = request.Phone.Trim(),
+            Salary = request.Salary!.Value
+        };
 
-        return StatusCode(
-            StatusCodes.Status500InternalServerError,
-            new
+        try
+        {
+            var updated =
+                await _contactRepository.UpdateAsync(contact);
+
+            if (!updated)
             {
-                message =
-                    "An unexpected error occurred while deleting the contact."
+                return NotFound(new
+                {
+                    message = "Contact was not found."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "Contact updated successfully."
             });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Failed to update contact {ContactId}.",
+                request.Id);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message =
+                        "An unexpected error occurred while updating the contact."
+                });
+        }
     }
-}
+
+    [HttpDelete]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(
+        [FromBody] DeleteContactRequest? request)
+    {
+        if (request is null)
+        {
+            return BadRequest(new
+            {
+                message = "Invalid request."
+            });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Invalid contact id."
+            });
+        }
+
+        try
+        {
+            var deleted =
+                await _contactRepository.DeleteAsync(request.Id);
+
+            if (!deleted)
+            {
+                return NotFound(new
+                {
+                    message = "Contact was not found."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "Contact deleted successfully."
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Failed to delete contact {ContactId}.",
+                request.Id);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message =
+                        "An unexpected error occurred while deleting the contact."
+                });
+        }
+    }
 }
