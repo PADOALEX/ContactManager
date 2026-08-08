@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Contact Manager";
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h1 class="display-6 fw-semibold">
+            Contact Manager
+        </h1>
+
+        <p class="text-muted">
+            Manage contacts imported from CSV files.
+        </p>
+    </div>
+
+    @await Component.InvokeAsync("ContactList")
+
+</div>
