@@ -3,15 +3,22 @@
         ViewContext.RouteData.Values["controller"]?.ToString();
 }
 
-<header class="border-bottom bg-white shadow-sm">
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
+<header class="app-header">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container app-container">
 
             <a
-                class="navbar-brand fw-semibold"
+                class="navbar-brand app-brand"
                 asp-controller="Contacts"
                 asp-action="Index">
-                Contact Manager
+
+                <span class="brand-mark">
+                    CM
+                </span>
+
+                <span>
+                    Contact Manager
+                </span>
             </a>
 
             <button
@@ -22,6 +29,7 @@
                 aria-controls="mainNavigation"
                 aria-expanded="false"
                 aria-label="Toggle navigation">
+
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -29,22 +37,26 @@
                 id="mainNavigation"
                 class="collapse navbar-collapse">
 
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+
                     <li class="nav-item">
                         <a
-                            class="nav-link @(currentController == "Contacts" ? "active fw-semibold" : "")"
+                            class="nav-link app-nav-link @(currentController == "Contacts" ? "active" : "")"
                             asp-controller="Contacts"
                             asp-action="Index">
                             Contacts
                         </a>
                     </li>
+
+                    <li class="nav-item d-none d-lg-block">
+                        <span class="tech-pill">
+                            .NET 10 · Dapper · SQL Server
+                        </span>
+                    </li>
+
                 </ul>
-
-                <span class="navbar-text small text-muted">
-                    ASP.NET Core MVC · Dapper
-                </span>
-
             </div>
+
         </div>
     </nav>
 </header>

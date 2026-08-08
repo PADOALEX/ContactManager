@@ -1,14 +1,47 @@
-<footer class="border-top bg-white py-4 mt-auto">
-    <div
-        class="container d-flex flex-column flex-md-row justify-content-between gap-2">
+<footer class="app-footer mt-auto">
+    <div class="container app-container">
 
-        <span class="text-muted small">
-            &copy; @DateTime.UtcNow.Year Contact Manager
-        </span>
+        <div class="footer-inner">
+            <div>
+                <div class="footer-brand">
+                    Contact Manager
+                </div>
 
-        <span class="text-muted small">
-            ASP.NET Core MVC · Dapper · SQL Server
-        </span>
+                <div class="small text-muted">
+                    Trainee / Junior .NET technical task
+                </div>
+            </div>
+
+            <div class="footer-meta">
+                <span>
+                    ASP.NET Core MVC
+                </span>
+
+                <span class="footer-separator">
+                    ·
+                </span>
+
+                <span>
+                    Dapper
+                </span>
+
+                <span class="footer-separator">
+                    ·
+                </span>
+
+                <span>
+                    SQL Server
+                </span>
+
+                <span class="footer-separator d-none d-sm-inline">
+                    ·
+                </span>
+
+                <span class="d-none d-sm-inline">
+                    @DateTime.UtcNow.Year
+                </span>
+            </div>
+        </div>
 
     </div>
 </footer>

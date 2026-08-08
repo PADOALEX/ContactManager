@@ -1,130 +1,176 @@
 @model ContactManager.Web.Models.ContactsIndexViewModel
 
 @{
-    ViewData["Title"] = "Contact Manager";
+    ViewData["Title"] = "Contacts";
 }
 
-<div class="container py-4">
+<section class="app-page">
+    <div class="container app-container">
 
-    <div class="mb-4">
-        <h1 class="display-6 fw-semibold">
-            Contact Manager
-        </h1>
+        <div class="page-heading">
+            <div>
+                <div class="eyebrow">Contact database</div>
 
-        <p class="text-muted">
-            Upload CSV files and manage stored contacts.
-        </p>
-    </div>
+                <h1 class="page-title">
+                    Contact Manager
+                </h1>
 
-    @if (TempData["SuccessMessage"] is string successMessage)
-    {
-        <div class="alert alert-success">
-            @successMessage
+                <p class="page-subtitle">
+                    Import contacts from CSV, review the stored data,
+                    and manage records without leaving the table.
+                </p>
+            </div>
+
+            <div class="page-heading-badge">
+                <span class="status-dot"></span>
+                SQL Server connected
+            </div>
         </div>
-    }
 
-    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">
-            @Model.ErrorMessage
-        </div>
-    }
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div
+                class="alert app-alert app-alert-success"
+                role="alert">
+                <div class="app-alert-icon">
+                    ✓
+                </div>
 
-    @if (Model.ImportErrors.Count > 0)
-    {
-        <div class="alert alert-danger">
+                <div>
+                    <strong>Import completed</strong>
+                    <div>@successMessage</div>
+                </div>
+            </div>
+        }
 
-            <h5 class="alert-heading">
-                CSV import failed
-            </h5>
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div
+                class="alert app-alert app-alert-danger"
+                role="alert">
+                <div class="app-alert-icon">
+                    !
+                </div>
 
-            <p>
-                Fix the following errors and try again:
-            </p>
+                <div>
+                    <strong>Unable to complete the request</strong>
+                    <div>@Model.ErrorMessage</div>
+                </div>
+            </div>
+        }
 
-            <ul class="mb-0">
-                @foreach (var error in Model.ImportErrors)
-                {
-                    <li>
-                        Row @error.RowNumber:
-                        @error.Message
-                    </li>
-                }
-            </ul>
+        @if (Model.ImportErrors.Count > 0)
+        {
+            <div
+                class="alert app-alert app-alert-danger"
+                role="alert">
 
-        </div>
-    }
+                <div class="app-alert-icon">
+                    !
+                </div>
 
-    <div class="card shadow-sm mb-4">
+                <div class="w-100">
+                    <strong>CSV import failed</strong>
 
-        <div class="card-body">
-
-            <h2 class="h5 mb-3">
-                Import contacts
-            </h2>
-
-            <form
-                asp-controller="Contacts"
-                asp-action="Import"
-                method="post"
-                enctype="multipart/form-data">
-
-                <div class="row g-3 align-items-end">
-
-                    <div class="col-md-9">
-
-                        <label
-                            for="csvFile"
-                            class="form-label">
-
-                            CSV file
-
-                        </label>
-
-                        <input
-                            id="csvFile"
-                            name="file"
-                            type="file"
-                            accept=".csv,text/csv"
-                            class="form-control"
-                            required />
-
-                        <div class="form-text">
-                            Required columns:
-                            Name, Date of birth, Married,
-                            Phone, Salary.
-                        </div>
-
+                    <div class="mt-1 mb-2">
+                        Fix the following rows and upload the file again.
                     </div>
 
-                    <div class="col-md-3">
+                    <ul class="mb-0 ps-3">
+                        @foreach (var error in Model.ImportErrors)
+                        {
+                            <li>
+                                Row @error.RowNumber:
+                                @error.Message
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
 
-                        <button
-                            type="submit"
-                            class="btn btn-primary w-100">
+        <section class="app-card upload-card mb-4">
+            <div class="app-card-body">
+                <div class="row align-items-center g-4">
 
-                            Upload CSV
+                    <div class="col-lg-5">
+                        <div class="section-kicker">
+                            CSV import
+                        </div>
 
-                        </button>
+                        <h2 class="section-title">
+                            Add contacts in one upload
+                        </h2>
 
+                        <p class="section-description mb-0">
+                            Choose a CSV file with the required columns.
+                            The file is validated on the server before
+                            any records are written to the database.
+                        </p>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <form
+                            asp-controller="Contacts"
+                            asp-action="Import"
+                            method="post"
+                            enctype="multipart/form-data">
+
+                            <div class="upload-panel">
+                                <div class="mb-3">
+                                    <label
+                                        for="csvFile"
+                                        class="form-label fw-semibold">
+                                        CSV file
+                                    </label>
+
+                                    <input
+                                        id="csvFile"
+                                        name="file"
+                                        type="file"
+                                        accept=".csv,text/csv"
+                                        class="form-control app-file-input"
+                                        required />
+
+                                    <div class="form-text mt-2">
+                                        Required:
+                                        Name, Date of birth, Married,
+                                        Phone, Salary
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                                    <div class="small text-muted">
+                                        Maximum file size: 5 MB
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary app-primary-btn">
+                                        Upload CSV
+                                    </button>
+                                </div>
+                            </div>
+
+                        </form>
                     </div>
 
                 </div>
+            </div>
+        </section>
 
-            </form>
-
+        <div
+            id="ajaxAntiforgeryToken"
+            class="d-none">
+            @Html.AntiForgeryToken()
         </div>
 
-    </div>
-        <div id="ajaxAntiforgeryToken" class="d-none">
-        @Html.AntiForgeryToken()
-    </div>
+        @await Component.InvokeAsync(
+            "ContactList",
+            new { query = Model.Query })
 
-    @await Component.InvokeAsync(
-        "ContactList",
-        new { query = Model.Query })
-
-</div>
+    </div>
+</section>
 
 @section Scripts
 {

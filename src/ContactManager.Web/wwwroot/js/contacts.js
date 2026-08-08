@@ -533,13 +533,27 @@ document.addEventListener("DOMContentLoaded", () => {
             ).textContent =
                 contact.dateOfBirth;
 
-            getDisplay(
-                row,
-                "married"
-            ).textContent =
+            const marriedDisplay =
+                getDisplay(
+                    row,
+                    "married"
+                );
+
+            marriedDisplay.textContent =
                 contact.married
                     ? "Yes"
                     : "No";
+
+            marriedDisplay.classList.remove(
+                "status-badge-positive",
+                "status-badge-neutral"
+            );
+
+            marriedDisplay.classList.add(
+                contact.married
+                    ? "status-badge-positive"
+                    : "status-badge-neutral"
+            );
 
             getDisplay(
                 row,
