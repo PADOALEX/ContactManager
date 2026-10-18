@@ -1,6 +1,25 @@
-# PADO ContactFlow
+<div align="center">
 
-**A focused ASP.NET Core MVC contact management portfolio project.** Built with **.NET 10**, Razor Views, **Dapper**, Microsoft SQL Server and a small amount of vanilla JavaScript. No Entity Framework Core, authentication provider or cloud dependency required for local use.
+# 📇 PADO ContactFlow
+
+### Modern contact management, without unnecessary complexity.
+
+**ASP.NET Core MVC · .NET 10 · Dapper · SQL Server · Razor Views**
+
+[![CI](https://github.com/PADOALEX/ContactManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PADOALEX/ContactManager/actions/workflows/ci.yml)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![ASP.NET Core MVC](https://img.shields.io/badge/ASP.NET_Core-MVC-5C2D91)
+![Dapper](https://img.shields.io/badge/Data_Access-Dapper-167D77)
+![SQL Server](https://img.shields.io/badge/Database-SQL_Server-CC2927?logo=microsoftsqlserver&logoColor=white)
+![Tests](https://img.shields.io/badge/Testing-xUnit-3B82F6)
+
+**An interview-ready demonstration of practical .NET engineering:** validated CSV imports, atomic database writes, safe query construction, full contact CRUD, and automated tests against a real SQL Server.
+
+[Getting started](#quick-start--windows-localdb) · [Features](#features) · [Architecture](#architecture) · [Verification](#testing) · [Security](#security-and-production-limitations)
+
+</div>
+
+---
 
 ## Features
 
@@ -10,6 +29,16 @@
 - Import UTF-8 CSV with/without BOM; strict validation, duplicate detection, row-level errors and **atomic transactions**.
 - Antiforgery protection on write operations, Dapper parameterized SQL and structured logging.
 - Unit, HTTP smoke and SQL Server integration tests, GitHub Actions CI, optional SQL Server Docker Compose.
+
+### Feature overview
+
+| Contacts | CSV import | Engineering |
+| :-- | :-- | :-- |
+| Create, edit, delete and confirm destructive actions | Strict UTF-8/BOM decoding and exact headers | Dapper with parameterized SQL |
+| Global server search, filters, sorting and pagination | Per-row diagnostics and duplicate detection | Transactions with all-or-nothing semantics |
+| Responsive Razor/Bootstrap table and quick page tools | 5 MB and 10,000-row input limits | Antiforgery, xUnit, SQL Server CI |
+
+> **Scope:** This is a deliberately compact server-rendered MVC application, not a public contact-book SaaS. Its lack of sign-in is intentional for a local interview demo.
 
 ## Prerequisites
 
@@ -92,11 +121,24 @@ dotnet test PADO.ContactFlow.sln -c Release --filter 'Category!=SqlServer'
 
 To execute real SQL integration tests, configure an administrative connection **to a test server** (`CONTACTFLOW_TEST_CONNECTION`); see [testing instructions](docs/TESTING.md). The integration suite creates a randomly named isolated database, verifies CRUD and rollback, then drops it. GitHub Actions provides a disposable SQL Server container for the integration job.
 
-> **Verification disclosure:** The project source was audited and JavaScript syntax was checked, but this deliverable was assembled in an environment without .NET SDK or SQL Server. .NET compilation, xUnit and DB integration tests are **not yet locally verified**. CI will run when uploaded to GitHub; see [verification record](docs/TESTING.md). Do not describe tests as passing before seeing green CI.
+> **Verified on GitHub Actions (October 18, 2026):** Release build and non-SQL tests succeeded; the SQL Server integration job succeeded against an isolated SQL Server 2022 service. [See CI results](https://github.com/PADOALEX/ContactManager/actions/runs/39122100044) and the [test report](docs/TESTING.md). Manual Windows/LocalDB browser testing is not claimed to be completed.
 
 ## Architecture
 
 This is intentionally **one web project + one test project**, not a microservice or Clean Architecture showcase. The controller handles HTTP concerns, the CSV service validates import content, the repository handles Dapper SQL/transactions, Razor provides SSR rendering, and vanilla JavaScript handles inline editing. More detail: [architecture decisions](docs/architecture.md).
+
+```mermaid
+flowchart LR
+    UI["Razor Views + JS"] --> MVC["MVC Controller"]
+    MVC --> CSV["CSV Validator"]
+    MVC --> DAL["Dapper Repository"]
+    CSV --> DAL
+    DAL --> DB[("SQL Server / LocalDB")]
+    TEST["xUnit + Integration Tests"] -.-> MVC
+    TEST -.-> DB
+```
+
+**The key trade-off:** A single MVC project keeps the code easy to navigate while SQL constraints and transactional imports protect correctness at the database boundary.
 
 ## Security and production limitations
 
@@ -109,6 +151,14 @@ This is intentionally **one web project + one test project**, not a microservice
 
 .NET 10 · ASP.NET Core MVC · Razor · Dapper · Microsoft.Data.SqlClient · SQL Server/LocalDB · CsvHelper · Bootstrap · JavaScript · xUnit · GitHub Actions
 
-## Publishing to the existing GitHub repository
+## Project status
 
-The migration is staged in [draft PR #1](https://github.com/PADOALEX/ContactManager/pull/1) on branch `feature/pado-contactflow-v1`. For a Windows one-command publication, run `powershell -ExecutionPolicy Bypass -File .\scripts\Publish-To-GitHub.ps1` from this extracted source folder. It runs local .NET checks before the push and does not change `main`. See [GitHub publishing instructions](docs/GITHUB_PUBLISHING.md). The draft PR remains unmerged until CI and SQL Server checks pass.
+The canonical branch is **`main`**; GitHub Actions builds the application and tests it with a real SQL Server container. Updates to this small portfolio project are welcome through pull requests, with automated dependency-update PRs via Dependabot.
+
+- **Current scope:** Local demonstration application, intentionally without user accounts.
+- **Before real deployment:** Add identity and authorization, per-user data isolation, HTTPS with trusted certificates, application monitoring and deployment-specific hardening.
+- **Verification:** [CI workflow](.github/workflows/ci.yml) · [Testing report](docs/TESTING.md) · [Security notes](SECURITY.md)
+
+---
+
+<div align="center"><sub>Built as a practical C# / ASP.NET Core MVC portfolio project · PADO</sub></div>
