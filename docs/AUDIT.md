@@ -30,8 +30,8 @@ No EF Core replacement, separate REST API, authentication/authorization subsyste
 
 Windows PowerShell restore and Release build succeeded on the original upgrade (the then-resolved PKCS dependency emitted two vulnerability warnings). The local non-SQL test run reported **23 passed, 0 failed**.
 
-Both GitHub Actions jobs succeeded for the baseline migration and for the security-updated revision: Linux Release build/unit/MVC tests and SQL Server 2022 integration tests. [Verified CI run](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734).
+Both GitHub Actions jobs succeeded for the baseline migration and for the security-updated revision: Linux Release build/unit/MVC tests and SQL Server 2022 integration tests. [Verified main-branch CI run](https://github.com/PADOALEX/ContactManager/actions/runs/39124553339).
 
-The final dependency revision uses Microsoft.Data.SqlClient 7.1.1 plus pinned patched System.Security.Cryptography.Pkcs 10.0.13. NuGet warnings NU1901–NU1904 are configured as errors, and Dependabot checks for updates automatically.
+Final follow-up (October 18, 2026): 29/29 unit/MVC tests and 1/1 SQL Server integration test passed on main; JavaScript syntax check passed. Money is now sent from the browser as decimal text and parsed exactly into .NET decimal; the view component forwards request cancellation. Dapper and test runner dependencies and both GitHub Actions jobs are refreshed. The final dependency revision uses Microsoft.Data.SqlClient 7.1.1 plus pinned patched System.Security.Cryptography.Pkcs 10.0.13. NuGet warnings NU1901–NU1904 are configured as errors, and Dependabot checks for updates automatically.
 
 A manual Windows LocalDB browser acceptance test was **not independently observed**. This is a local demonstration application without user authentication or per-user authorization, not a production-ready multi-tenant service.

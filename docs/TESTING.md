@@ -9,19 +9,19 @@
 | Windows PowerShell (.NET 10.0.10) | `dotnet restore` | Passed; older dependency produced NU1902/NU1903 before the security patch |
 | Windows PowerShell | `dotnet build -c Release` | Passed; older dependency produced NU1902/NU1903 before the patch |
 | Windows PowerShell | Unit + MVC tests excluding SQL | **23 passed, 0 failed, 0 skipped** |
-| GitHub Actions, Ubuntu | Restore, Release build, unit/MVC tests, NuGet audit gate | **Succeeded on updated dependencies** |
-| GitHub Actions, Ubuntu with SQL Server 2022 service | Integration test job | **Succeeded on updated dependencies** |
+| GitHub Actions, Ubuntu | Restore, Release build, unit/MVC tests, NuGet audit gate, JS syntax check | **29 passed / 29; zero build warnings or errors** |
+| GitHub Actions, Ubuntu with SQL Server 2022 service | Integration test job | **1 passed / 1** |
 | Windows LocalDB browser CRUD & import | Manual end-to-end run | Not independently observed |
 
-Evidence: [successful security-updated GitHub Actions run from 18 October 2026](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734). The CI job summary confirms both jobs completed successfully. The 23-test count is taken from the provided local PowerShell output, not inferred from the CI summary.
+Evidence: [successful final main-branch GitHub Actions run from 18 October 2026](https://github.com/PADOALEX/ContactManager/actions/runs/39124553339). The final GitHub Actions job logs confirm **29 unit/MVC cases and 1 SQL Server integration case**, all passed, plus a successful JavaScript syntax check. The historical 23-test count in the Windows row is taken from the provided local PowerShell output.
 
-**Security follow-up — verified:** The original SqlClient dependency restored a vulnerable Pkcs package. SqlClient was updated to 7.1.1 and patched Pkcs 10.0.13 is explicitly pinned. NuGet audit warnings are treated as errors. The updated commit `9245f1d` passed both CI jobs, including restore/build and the SQL Server integration job.
+**Security follow-up — verified:** The original SqlClient dependency restored a vulnerable Pkcs package. SqlClient was updated to 7.1.1 and patched Pkcs 10.0.13 is explicitly pinned. NuGet audit warnings are treated as errors. The latest main commit with the salary-precision fix and dependency upgrades passed both CI jobs, including restore/build and SQL Server integration.
 
 ## Test coverage
 
 - **CSV parsing:** UTF-8 BOM, non-ASCII data, invalid UTF-8, unexpected headers, order/case flexibility, malformed column count, in-file duplicates, row-level errors, empty file and quoted delimiters.
 - **Controllers/MVC:** GET page, JSON create/update/delete with antiforgery protection, invalid input rejection, duplicate import preflight, atomic import call.
-- **Model validation:** Whitespace, missing values, future dates, salary precision, query enum/page normalization.
+- **Model validation:** Whitespace, missing values, future dates, salary precision, JSON-string decimal round trips including DECIMAL(18,2) maximum, query enum/page normalization.
 - **SQL Server integration:** Dapper CRUD, exact `DECIMAL(18,2)` round trip, search and escaping, unique-phone database constraint, all-or-nothing rollback and disposable test database.
 
 ## Commands
