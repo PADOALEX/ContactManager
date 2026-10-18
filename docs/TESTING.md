@@ -9,13 +9,13 @@
 | Windows PowerShell (.NET 10.0.10) | `dotnet restore` | Passed; older dependency produced NU1902/NU1903 before the security patch |
 | Windows PowerShell | `dotnet build -c Release` | Passed; older dependency produced NU1902/NU1903 before the patch |
 | Windows PowerShell | Unit + MVC tests excluding SQL | **23 passed, 0 failed, 0 skipped** |
-| GitHub Actions, Ubuntu | Restore, Release build, unit/MVC tests | **Succeeded** |
-| GitHub Actions, Ubuntu with SQL Server 2022 service | Integration test job | **Succeeded** |
+| GitHub Actions, Ubuntu | Restore, Release build, unit/MVC tests, NuGet audit gate | **Succeeded on updated dependencies** |
+| GitHub Actions, Ubuntu with SQL Server 2022 service | Integration test job | **Succeeded on updated dependencies** |
 | Windows LocalDB browser CRUD & import | Manual end-to-end run | Not independently observed |
 
-Evidence: [successful GitHub Actions run from 18 October 2026](https://github.com/PADOALEX/ContactManager/actions/runs/39122100044). The CI job summary confirms both jobs completed successfully. The 23-test count is taken from the provided local PowerShell output, not inferred from the CI summary.
+Evidence: [successful security-updated GitHub Actions run from 18 October 2026](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734). The CI job summary confirms both jobs completed successfully. The 23-test count is taken from the provided local PowerShell output, not inferred from the CI summary.
 
-**Security follow-up:** The original SqlClient dependency restored a vulnerable Pkcs package. SqlClient is updated and the patched Pkcs 10.0.13 is explicitly pinned. CI is configured to fail when NuGet reports a vulnerability. Fresh CI is required to validate these changes.
+**Security follow-up — verified:** The original SqlClient dependency restored a vulnerable Pkcs package. SqlClient was updated to 7.1.1 and patched Pkcs 10.0.13 is explicitly pinned. NuGet audit warnings are treated as errors. The updated commit `9245f1d` passed both CI jobs, including restore/build and the SQL Server integration job.
 
 ## Test coverage
 

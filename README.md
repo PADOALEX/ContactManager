@@ -121,7 +121,7 @@ dotnet test PADO.ContactFlow.sln -c Release --filter 'Category!=SqlServer'
 
 To execute real SQL integration tests, configure an administrative connection **to a test server** (`CONTACTFLOW_TEST_CONNECTION`); see [testing instructions](docs/TESTING.md). The integration suite creates a randomly named isolated database, verifies CRUD and rollback, then drops it. GitHub Actions provides a disposable SQL Server container for the integration job.
 
-> **Verified on GitHub Actions (October 18, 2026):** Release build and non-SQL tests succeeded; the SQL Server integration job succeeded against an isolated SQL Server 2022 service. [See CI results](https://github.com/PADOALEX/ContactManager/actions/runs/39122100044) and the [test report](docs/TESTING.md). Manual Windows/LocalDB browser testing is not claimed to be completed.
+> **Verified on GitHub Actions (October 18, 2026):** Release build and non-SQL tests succeeded; the SQL Server integration job succeeded against an isolated SQL Server 2022 service. [See CI results](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734) and the [test report](docs/TESTING.md). The updated security-dependency commit also passed both CI jobs. Manual Windows/LocalDB browser testing is not claimed to be completed.
 
 ## Architecture
 

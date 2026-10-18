@@ -26,6 +26,12 @@ The supplied `ContactManager-main(6).zip` included one ASP.NET Core MVC / .NET 1
 
 No EF Core replacement, separate REST API, authentication/authorization subsystem, external cache, frontend build pipeline, or multi-layer project split. An unauthenticated local demo should **not** be exposed to the public internet.
 
-## Verification caveat
+## Verification and security status
 
-See `docs/TESTING.md`. This authoring environment did not contain a .NET SDK or a running SQL Server. The current implementation is a source-level upgrade **pending SDK build, tests, SQL integration and browser testing**; the documents do not claim otherwise.
+Windows PowerShell restore and Release build succeeded on the original upgrade (the then-resolved PKCS dependency emitted two vulnerability warnings). The local non-SQL test run reported **23 passed, 0 failed**.
+
+Both GitHub Actions jobs succeeded for the baseline migration and for the security-updated revision: Linux Release build/unit/MVC tests and SQL Server 2022 integration tests. [Verified CI run](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734).
+
+The final dependency revision uses Microsoft.Data.SqlClient 7.1.1 plus pinned patched System.Security.Cryptography.Pkcs 10.0.13. NuGet warnings NU1901–NU1904 are configured as errors, and Dependabot checks for updates automatically.
+
+A manual Windows LocalDB browser acceptance test was **not independently observed**. This is a local demonstration application without user authentication or per-user authorization, not a production-ready multi-tenant service.
