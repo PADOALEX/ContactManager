@@ -14,6 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + fractional.padEnd(2, "0");
     }
 
+    function salaryMinorUnits(value) {
+        const [integer, fractional = ""] = String(value).split(".");
+        return BigInt(integer) * 100n + BigInt(fractional.padEnd(2, "0"));
+    }
+
     const importForm = document.querySelector("#csvImportForm");
     importForm?.addEventListener("submit", event => {
         const file = importForm.querySelector("input[type=file]")?.files?.[0];
@@ -194,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function getSortValue(row, column) {
         switch (column) {
             case "salary":
-                return Number(row.dataset.salary);
+                return salaryMinorUnits(row.dataset.salary);
 
             case "married":
                 return row.dataset.married === "true"
@@ -220,10 +225,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const secondValue =
             getSortValue(secondRow, column);
 
-        if (
-            column === "salary" ||
-            column === "married"
-        ) {
+        if (column === "salary") {
+            return firstValue > secondValue ? 1 : firstValue < secondValue ? -1 : 0;
+        }
+
+        if (column === "married") {
             return firstValue - secondValue;
         }
 
