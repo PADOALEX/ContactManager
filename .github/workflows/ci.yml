@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore PADO.ContactFlow.sln
+      - name: Build Release
+        run: dotnet build PADO.ContactFlow.sln -c Release --no-restore
+      - name: Unit and MVC smoke tests (no SQL required)
+        run: dotnet test PADO.ContactFlow.sln -c Release --no-build --filter 'Category!=SqlServer' --logger 'console;verbosity=normal'
+
+  sqlserver-integration:
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: CiSql@${{ github.run_id }}A1
+        ports:
+          - 1433:1433
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Wait for SQL Server listener
+        run: timeout 120 bash -c 'until (echo > /dev/tcp/127.0.0.1/1433) >/dev/null 2>&1; do sleep 3; done'; sleep 10
+      - name: Run isolated repository integration tests
+        env:
+          CONTACTFLOW_TEST_CONNECTION: Server=127.0.0.1,1433;Database=master;User Id=sa;Password=CiSql@${{ github.run_id }}A1;Encrypt=True;TrustServerCertificate=True;
+        run: dotnet test PADO.ContactFlow.sln -c Release --filter 'Category=SqlServer' --logger 'console;verbosity=normal'

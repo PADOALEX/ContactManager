@@ -1,344 +1,164 @@
-# Contact Manager
+<div align="center">
 
-A small ASP.NET Core MVC application built for a Trainee / Junior .NET technical task.
+# 📇 PADO ContactFlow
 
-The application imports contacts from CSV files, validates and stores them in Microsoft SQL Server, and provides both server-side and client-side tools for browsing and managing the stored data.
+### Modern contact management, without unnecessary complexity.
+
+**ASP.NET Core MVC · .NET 10 · Dapper · SQL Server · Razor Views**
+
+[![CI](https://github.com/PADOALEX/ContactManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PADOALEX/ContactManager/actions/workflows/ci.yml)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![ASP.NET Core MVC](https://img.shields.io/badge/ASP.NET_Core-MVC-5C2D91)
+![Dapper](https://img.shields.io/badge/Data_Access-Dapper-167D77)
+![SQL Server](https://img.shields.io/badge/Database-SQL_Server-CC2927?logo=microsoftsqlserver&logoColor=white)
+![Tests](https://img.shields.io/badge/Testing-xUnit-3B82F6)
+
+**An interview-ready demonstration of practical .NET engineering:** validated CSV imports, atomic database writes, safe query construction, full contact CRUD, and automated tests against a real SQL Server.
+
+[Getting started](#quick-start--windows-localdb) · [Features](#features) · [Architecture](#architecture) · [Verification](#testing) · [Security](#security-and-production-limitations)
+
+</div>
+
+---
 
 ## Features
 
-### CSV import
-- Upload `.csv` files from the browser.
-- Required columns:
-  - `Name`
-  - `Date of birth`
-  - `Married`
-  - `Phone`
-  - `Salary`
-- Backend processing with CsvHelper.
-- File size limit: 5 MB.
-- Row-level validation with clear error messages.
-- The complete file is validated before database insertion.
-- Database insertion is performed in a transaction.
+- Create contacts individually; browse, edit and delete with confirmation.
+- Server-side search/filter on the *whole* database, column whitelisting and deterministic sorting.
+- Server-side pagination (1–100 rows/page), plus clearly labeled instant filtering/sorting of the visible page.
+- Import UTF-8 CSV with/without BOM; strict validation, duplicate detection, row-level errors and **atomic transactions**.
+- Antiforgery protection on write operations, Dapper parameterized SQL and structured logging.
+- Unit, HTTP smoke and SQL Server integration tests, GitHub Actions CI, optional SQL Server Docker Compose.
 
-### Contact management
-- Display contacts from SQL Server.
-- Inline editing directly inside the table.
-- Delete contacts with confirmation.
-- Server-side validation for updates.
-- AJAX update/delete requests protected with an antiforgery token.
+### Feature overview
 
-### Sorting, filtering, and pagination
-- Server-side pagination.
-- Server-side ordering by every contact column.
-- Client-side filtering with JavaScript.
-- Client-side sorting with JavaScript.
-- Client-side tools operate on the rows already loaded on the current server page.
+| Contacts | CSV import | Engineering |
+| :-- | :-- | :-- |
+| Create, edit, delete and confirm destructive actions | Strict UTF-8/BOM decoding and exact headers | Dapper with parameterized SQL |
+| Global server search, filters, sorting and pagination | Per-row diagnostics and duplicate detection | Transactions with all-or-nothing semantics |
+| Responsive Razor/Bootstrap table and quick page tools | 5 MB and 10,000-row input limits | Antiforgery, xUnit, SQL Server CI |
 
-### UI architecture
-- ASP.NET Core MVC.
-- Contact list implemented as a ViewComponent.
-- Header and footer implemented as partial views.
-- Responsive Bootstrap-based interface with custom styling.
-
-## Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| .NET 10 / ASP.NET Core MVC | Web application |
-| C# | Backend |
-| Microsoft SQL Server / LocalDB | Database |
-| Dapper 2.1.79 | Data access |
-| Microsoft.Data.SqlClient 7.0.2 | SQL Server connection |
-| CsvHelper 33.1.0 | CSV parsing |
-| JavaScript | Client-side filtering, sorting, inline actions |
-| Bootstrap | Responsive UI |
-
-## Project Structure
-
-```text
-ContactManager/
-├── Database/
-│   ├── 001_CreateDatabase.sql
-│   └── 002_CreateContactsTable.sql
-│
-├── Samples/
-│   ├── contacts-valid.csv
-│   └── contacts-invalid.csv
-│
-├── src/
-│   └── ContactManager.Web/
-│       ├── Controllers/
-│       ├── Data/
-│       │   └── Repositories/
-│       ├── Models/
-│       ├── Services/
-│       ├── ViewComponents/
-│       ├── Views/
-│       │   ├── Contacts/
-│       │   └── Shared/
-│       ├── wwwroot/
-│       ├── Program.cs
-│       ├── appsettings.json
-│       └── ContactManager.Web.csproj
-│
-└── ContactManager.sln
-```
+> **Scope:** This is a deliberately compact server-rendered MVC application, not a public contact-book SaaS. Its lack of sign-in is intentional for a local interview demo.
 
 ## Prerequisites
 
-Install:
-
 - .NET 10 SDK
-- Microsoft SQL Server or SQL Server Express LocalDB
-- Git
+- Windows **SQL Server LocalDB** (recommended for simple Windows setup), full SQL Server, or Docker with Microsoft SQL Server 2022
+- SQL Server Management Studio or `sqlcmd` to apply database setup scripts
 
-The default project configuration uses:
+## Quick start — Windows LocalDB
 
-```text
-(localdb)\MSSQLLocalDB
-```
-
-with the database:
-
-```text
-ContactManagerDb
-```
-
-## Database Setup
-
-Connect to your SQL Server instance and execute the scripts in this order:
-
-```text
-Database/001_CreateDatabase.sql
-Database/002_CreateContactsTable.sql
-```
-
-The first script creates `ContactManagerDb` if it does not exist.
-
-The second script creates:
-
-```text
-dbo.Contacts
-```
-
-with the following schema:
-
-| Column | SQL type |
-|---|---|
-| Id | `INT IDENTITY` |
-| Name | `NVARCHAR(200)` |
-| DateOfBirth | `DATE` |
-| Married | `BIT` |
-| Phone | `NVARCHAR(50)` |
-| Salary | `DECIMAL(18,2)` |
-
-The table also contains database constraints for non-empty names and phone numbers and for non-negative salaries.
-
-## Connection String
-
-The default connection string is stored in:
-
-```text
-src/ContactManager.Web/appsettings.json
-```
-
-Default configuration:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=ContactManagerDb;Integrated Security=True;TrustServerCertificate=True;"
-  }
-}
-```
-
-If you use another SQL Server instance, update `DefaultConnection`.
-
-## Build and Run
-
-From the repository root:
+1. Install .NET 10 SDK and SQL Server Express LocalDB (for example via Visual Studio Installer).
+2. Create/start LocalDB and initialize the database (in order):
 
 ```powershell
-dotnet restore
-dotnet build .\ContactManager.sln
-dotnet run --project .\src\ContactManager.Web
+sqllocaldb info
+sqllocaldb start MSSQLLocalDB
+sqlcmd -S '(localdb)\MSSQLLocalDB' -E -b -i Database/001_CreateDatabase.sql
+sqlcmd -S '(localdb)\MSSQLLocalDB' -E -b -i Database/002_CreateContactsTable.sql
+sqlcmd -S '(localdb)\MSSQLLocalDB' -E -b -i Database/003_UniquePhone.sql
 ```
 
-The default HTTP development URL is:
+`sqlcmd` is a separate install on some Windows systems. You can instead run the three scripts in order in SSMS, including `GO` batch delimiters. `Database/003_UniquePhone.sql` stops with a helpful error if an old database already contains duplicate phone values; clean those records before re-running.
 
-```text
-http://localhost:5186
+3. Restore/build/run from the repository root:
+
+```powershell
+dotnet restore PADO.ContactFlow.sln
+dotnet build PADO.ContactFlow.sln -c Release --no-restore
+dotnet run --project src/PADO.ContactFlow.Web/PADO.ContactFlow.Web.csproj
 ```
 
-The root route opens the Contact Manager page.
+The default appsettings points to `ContactManagerDb` on `(localdb)\MSSQLLocalDB`. Find the actual local URL in the `dotnet run` output.
 
-## CSV Format
+## Optional Docker SQL Server (Windows/Linux)
 
-Example:
+For users who prefer SQL Server 2022 in Docker:
+
+```powershell
+Copy-Item .env.example .env
+# Edit .env: set a unique strong MSSQL_SA_PASSWORD (do not commit .env).
+docker compose up -d
+```
+
+Apply SQL files 001–003 using SSMS or `sqlcmd` against `localhost,1433`; then configure the application with **user secrets** or environment variables (never commit a real password):
+
+```powershell
+cd src/PADO.ContactFlow.Web
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=ContactManagerDb;User Id=sa;Password=YOUR_LOCAL_PASSWORD;Encrypt=True;TrustServerCertificate=True;"
+cd ../..
+dotnet run --project src/PADO.ContactFlow.Web
+```
+
+`TrustServerCertificate=True` is **local-development only**. Use a real trusted TLS certificate for production. Docker SQL Server uses more RAM than LocalDB; LocalDB is fine for a lightweight interview demo.
+
+## CSV contract
+
+Required column names (order arbitrary):
 
 ```csv
 Name,Date of birth,Married,Phone,Salary
-Emily Johnson,1992-06-15,true,+15551234567,4200.50
-Michael Davis,1988-11-03,false,+15559876543,3850.00
+Ada Lovelace,1815-12-10,false,+441234567890,1200.50
 ```
 
-### Validation rules
+- File size: **5 MB max**, **10,000 data rows max**.
+- Encoding: **UTF-8**, optionally with UTF-8 BOM. Strict decoding rejects invalid bytes.
+- Name: required, <=200 chars. Phone: required, <=50 chars and unique per database.
+- Date: `yyyy-MM-dd` or `dd.MM.yyyy`, not later than today.
+- Married: `true/false`, `yes/no`, or `1/0` (case insensitive).
+- Salary: nonnegative `DECIMAL(18,2)`, dot decimal separator or a **quoted** Ukrainian comma decimal, and <=2 fractional digits.
+- Duplicate phone in file or database: rejected. **All-or-nothing**: if one row fails, zero are inserted. Unexpected SQL errors also roll back the whole transaction.
+- CSV uses quoted fields for names containing commas. Errors list CSV line numbers. Each import reports the number of rows checked and the number committed.
 
-**Name**
-- Required.
-- Maximum 200 characters.
+Try `Samples/contacts-valid.csv` and `Samples/contacts-invalid.csv`. When testing repeated imports, use fresh phone values because uniqueness is enforced.
 
-**Date of birth**
-- Required.
-- Supported formats:
-  - `yyyy-MM-dd`
-  - `dd.MM.yyyy`
-- Cannot be in the future.
+## Testing
 
-**Married**
-- Accepted values:
-  - `true` / `false`
-  - `yes` / `no`
-  - `1` / `0`
-
-**Phone**
-- Required.
-- Maximum 50 characters.
-- Stored as a string so formatting symbols and leading `+` are preserved.
-
-**Salary**
-- Required.
-- Must be a valid decimal number.
-- Cannot be negative.
-- Maximum two decimal places.
-- Must fit SQL Server `DECIMAL(18,2)`.
-
-Sample files are available in the `Samples` folder:
-
-```text
-Samples/contacts-valid.csv
-Samples/contacts-invalid.csv
+```powershell
+dotnet test PADO.ContactFlow.sln -c Release --filter 'Category!=SqlServer'
 ```
 
-## Data Access
+To execute real SQL integration tests, configure an administrative connection **to a test server** (`CONTACTFLOW_TEST_CONNECTION`); see [testing instructions](docs/TESTING.md). The integration suite creates a randomly named isolated database, verifies CRUD and rollback, then drops it. GitHub Actions provides a disposable SQL Server container for the integration job.
 
-The project uses Dapper instead of Entity Framework.
+> **Verified on GitHub Actions (October 18, 2026):** Release build and non-SQL tests succeeded; the SQL Server integration job succeeded against an isolated SQL Server 2022 service. [See CI results](https://github.com/PADOALEX/ContactManager/actions/runs/39122749734) and the [test report](docs/TESTING.md). The updated security-dependency commit also passed both CI jobs. Manual Windows/LocalDB browser testing is not claimed to be completed.
 
-Database access is separated behind:
+## Architecture
 
-```text
-ISqlConnectionFactory
-IContactRepository
-ContactRepository
+This is intentionally **one web project + one test project**, not a microservice or Clean Architecture showcase. The controller handles HTTP concerns, the CSV service validates import content, the repository handles Dapper SQL/transactions, Razor provides SSR rendering, and vanilla JavaScript handles inline editing. More detail: [architecture decisions](docs/architecture.md).
+
+```mermaid
+flowchart LR
+    UI["Razor Views + JS"] --> MVC["MVC Controller"]
+    MVC --> CSV["CSV Validator"]
+    MVC --> DAL["Dapper Repository"]
+    CSV --> DAL
+    DAL --> DB[("SQL Server / LocalDB")]
+    TEST["xUnit + Integration Tests"] -.-> MVC
+    TEST -.-> DB
 ```
 
-The repository contains parameterized SQL for:
+**The key trade-off:** A single MVC project keeps the code easy to navigate while SQL constraints and transactional imports protect correctness at the database boundary.
 
-- reading paged contacts;
-- inserting imported contacts;
-- updating contacts;
-- deleting contacts.
+## Security and production limitations
 
-User-provided values are passed as SQL parameters.
+- All state-changing endpoints use antiforgery tokens. SQL search is parameterized and sorting uses an enum allowlist.
+- Database unique index and transaction prevent duplicate/partial writes even under a concurrent import race.
+- No built-in authentication/authorization: use for **local portfolio demonstration**, not exposure as a public multi-user product without adding auth and rate limiting.
+- Configuration examples contain no real credentials; `.env`, local appsettings overrides and user secrets must stay outside version control.
 
-For server-side ordering, the requested sort column is mapped through an enum/whitelist instead of inserting arbitrary client input directly into `ORDER BY`.
+## Tech stack
 
-## CSV Import Flow
+.NET 10 · ASP.NET Core MVC · Razor · Dapper · Microsoft.Data.SqlClient · SQL Server/LocalDB · CsvHelper · Bootstrap · JavaScript · xUnit · GitHub Actions
 
-```text
-Browser upload
-      ↓
-ContactsController
-      ↓
-CsvImportService
-      ↓
-Validate headers and every row
-      ↓
-IContactRepository
-      ↓
-Dapper transaction
-      ↓
-SQL Server
-```
+## Project status
 
-If validation fails, the import is rejected and no contacts from that file are inserted.
+The canonical branch is **`main`**; GitHub Actions builds the application and tests it with a real SQL Server container. Updates to this small portfolio project are welcome through pull requests, with automated dependency-update PRs via Dependabot.
 
-## Server-side vs Client-side Sorting
+- **Current scope:** Local demonstration application, intentionally without user accounts.
+- **Before real deployment:** Add identity and authorization, per-user data isolation, HTTPS with trusted certificates, application monitoring and deployment-specific hardening.
+- **Verification:** [CI workflow](.github/workflows/ci.yml) · [Testing report](docs/TESTING.md) · [Security notes](SECURITY.md)
 
-The application intentionally demonstrates both approaches required by the task.
+---
 
-### Server-side
-Clicking a table column header sends a new request to the server.
-
-```text
-Browser
-  → ContactsController
-  → ContactRepository
-  → SQL ORDER BY
-  → paged result
-```
-
-This ordering applies to the full database result set.
-
-### Client-side
-The Client-side tools panel uses JavaScript to filter and sort the rows already rendered on the current page.
-
-No server request is required for these operations.
-
-This keeps the distinction between scalable server-side pagination/ordering and instant client-side interactions clear.
-
-## Inline Editing
-
-Each row can be switched into edit mode without navigating to another page.
-
-The browser submits the updated contact as JSON to the update endpoint. The backend validates the request before passing the contact to the Dapper repository.
-
-Update and delete requests use ASP.NET Core antiforgery protection.
-
-## Error Handling
-
-The application handles common failure cases including:
-
-- missing files;
-- non-CSV uploads;
-- files larger than 5 MB;
-- empty CSV files;
-- missing or duplicate CSV headers;
-- malformed CSV structure;
-- invalid individual rows;
-- future dates of birth;
-- invalid boolean values;
-- invalid salary values;
-- update validation errors;
-- missing records during update/delete;
-- unexpected import/database failures.
-
-Unexpected server errors are logged with `ILogger`.
-
-## Assignment Coverage
-
-| Requirement | Implementation |
-|---|---|
-| ASP.NET MVC application | Yes |
-| CSV upload | Yes |
-| Backend CSV processing | Yes |
-| MS SQL storage | Yes |
-| Client-side filtering by columns | Yes |
-| Client-side sorting by columns | Yes |
-| Inline editing | Yes |
-| Delete records | Yes |
-| Basic validation | Yes |
-| Error handling | Yes |
-| Server-side pagination | Yes |
-| Server-side ordering | Yes |
-| Contact list ViewComponent | Yes |
-| Header partial view | Yes |
-| Footer partial view | Yes |
-| Dapper instead of Entity Framework | Yes |
-| SQL creation scripts in a separate folder | Yes |
-
-## Notes
-
-The sample implementation does not enforce contact uniqueness because the task does not define a unique key such as phone number or name/date combination. Importing the same valid CSV more than once therefore creates additional rows.
-
-For a larger production system, possible next steps would include automated tests, authentication/authorization, database migrations, structured observability, configurable upload limits, and a dedicated API layer.
+<div align="center"><sub>Built as a practical C# / ASP.NET Core MVC portfolio project · PADO</sub></div>
