@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - PADO ContactFlow</title>
+
+    <link
+        rel="stylesheet"
+        href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link
+        rel="stylesheet"
+        href="~/css/site.css"
+        asp-append-version="true" />
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <partial name="_Header" />
+
+    <main
+        role="main"
+        class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <partial name="_Footer" />
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync(
+        "Scripts",
+        required: false)
+
+</body>
+</html>
