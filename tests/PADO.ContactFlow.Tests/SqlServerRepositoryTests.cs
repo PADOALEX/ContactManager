@@ -68,6 +68,17 @@ public sealed class SqlServerRepositoryTests
             });
             Assert.Equal(0, injectionAttempt.TotalCount);
 
+            // DECIMAL(18,2) must survive the SQL round trip without floating-point conversion.
+            var preciseContact = NewContact("Precise Salary", "PH004");
+            preciseContact.Salary = 1234567890123456.78m;
+            var preciseId = await repo.AddAsync(preciseContact);
+            var precisePage = await repo.GetPagedAsync(new ContactQueryParameters
+            {
+                Search = "PH004", FilterBy = ContactFilterColumn.Phone
+            });
+            Assert.Equal(1234567890123456.78m, Assert.Single(precisePage.Items).Salary);
+            Assert.True(await repo.DeleteAsync(preciseId));
+
             // First insertion must be rolled back after a unique-phone violation on the second.
             await Assert.ThrowsAsync<SqlException>(() => repo.AddRangeAsync([
                 NewContact("Bob", "PH002"), NewContact("Collision", "PH001")

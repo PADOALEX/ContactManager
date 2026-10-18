@@ -53,6 +53,57 @@ public sealed class MvcSmokeTests : IClassFixture<ContactWebFactory>
     }
 
     [Fact]
+    public async Task UpdateAndDelete_WithAntiforgeryToken_AcceptValidRequests()
+    {
+        using var client = _factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        var token = System.Text.RegularExpressions.Regex.Match(html,
+            "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value;
+        Assert.NotEmpty(token);
+
+        using var update = new HttpRequestMessage(HttpMethod.Put, "/Contacts/Update");
+        update.Headers.Add("RequestVerificationToken", token);
+        update.Content = System.Net.Http.Json.JsonContent.Create(new
+        {
+            id = 42, name = "Alice", dateOfBirth = "2000-01-01", married = false,
+            phone = "+441234", salary = "1234567890123456.78"
+        });
+        using var updated = await client.SendAsync(update);
+        Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+
+        using var invalidUpdate = new HttpRequestMessage(HttpMethod.Put, "/Contacts/Update");
+        invalidUpdate.Headers.Add("RequestVerificationToken", token);
+        invalidUpdate.Content = System.Net.Http.Json.JsonContent.Create(new
+        {
+            id = 42, name = "Alice", dateOfBirth = "2000-01-01", married = false,
+            phone = "+441234", salary = "-1.234"
+        });
+        using var rejected = await client.SendAsync(invalidUpdate);
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+
+        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/Contacts/Delete");
+        delete.Headers.Add("RequestVerificationToken", token);
+        delete.Content = System.Net.Http.Json.JsonContent.Create(new { id = 42 });
+        using var deleted = await client.SendAsync(delete);
+        Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnsafeMethodsWithoutAntiforgeryToken_AreRejected()
+    {
+        using var client = _factory.CreateClient();
+        using var update = new HttpRequestMessage(HttpMethod.Put, "/Contacts/Update");
+        update.Content = System.Net.Http.Json.JsonContent.Create(new { id = 42 });
+        using var updateResponse = await client.SendAsync(update);
+        Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
+
+        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/Contacts/Delete");
+        delete.Content = System.Net.Http.Json.JsonContent.Create(new { id = 42 });
+        using var deleteResponse = await client.SendAsync(delete);
+        Assert.Equal(HttpStatusCode.BadRequest, deleteResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateWithoutAntiforgeryToken_ReturnsBadRequest()
     {
         using var client = _factory.CreateClient();

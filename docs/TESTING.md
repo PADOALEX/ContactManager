@@ -20,9 +20,9 @@ Evidence: [successful security-updated GitHub Actions run from 18 October 2026](
 ## Test coverage
 
 - **CSV parsing:** UTF-8 BOM, non-ASCII data, invalid UTF-8, unexpected headers, order/case flexibility, malformed column count, in-file duplicates, row-level errors, empty file and quoted delimiters.
-- **Controllers/MVC:** GET page, JSON contact creation with antiforgery protection, invalid input rejection, duplicate import preflight, atomic import call.
+- **Controllers/MVC:** GET page, JSON create/update/delete with antiforgery protection, invalid input rejection, duplicate import preflight, atomic import call.
 - **Model validation:** Whitespace, missing values, future dates, salary precision, query enum/page normalization.
-- **SQL Server integration:** Dapper CRUD, search and escaping, unique-phone database constraint, all-or-nothing rollback and disposable test database.
+- **SQL Server integration:** Dapper CRUD, exact `DECIMAL(18,2)` round trip, search and escaping, unique-phone database constraint, all-or-nothing rollback and disposable test database.
 
 ## Commands
 

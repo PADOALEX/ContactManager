@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace PADO.ContactFlow.Web.Models;
 
@@ -16,6 +17,7 @@ public class ContactFieldsRequest : IValidatableObject
     public string Phone { get; set; } = string.Empty;
 
     [Required]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public decimal? Salary { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

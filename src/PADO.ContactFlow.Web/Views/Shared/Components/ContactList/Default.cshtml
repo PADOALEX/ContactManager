@@ -454,11 +454,11 @@
                                     </span>
 
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputmode="decimal"
+                                        pattern="(?:0|[0-9]{1,16})(?:\.[0-9]{1,2})?"
                                         class="form-control form-control-sm edit-control d-none"
                                         data-input="salary"
-                                        min="0"
-                                        step="0.01"
                                         value="@contact.Salary.ToString(
                                             "F2",
                                             CultureInfo.InvariantCulture)"

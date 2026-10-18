@@ -3,6 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const endpoints = document.querySelector("#contactEndpoints")?.dataset ?? {};
     const csrf = document.querySelector("#ajaxAntiforgeryToken input[name='__RequestVerificationToken']")?.value ?? "";
+    // Money is always kept as decimal text; JavaScript Number cannot represent
+    // every DECIMAL(18,2) amount exactly.
+    function isValidSalaryText(value) {
+        return /^(?:0|[0-9]{1,16})(?:\.[0-9]{1,2})?$/.test(value);
+    }
+
+    function formatSalary(value) {
+        const [integer, fractional = ""] = String(value).split(".");
+        return integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + fractional.padEnd(2, "0");
+    }
+
     const importForm = document.querySelector("#csvImportForm");
     importForm?.addEventListener("submit", event => {
         const file = importForm.querySelector("input[type=file]")?.files?.[0];
@@ -30,9 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
             dateOfBirth: createForm.elements.namedItem("dateOfBirth").value,
             married: createForm.elements.namedItem("married").value === "true",
             phone: createForm.elements.namedItem("phone").value.trim(),
-            salary: salaryText === "" ? null : Number(salaryText)
+            salary: salaryText
         };
-        if (!createForm.checkValidity() || !Number.isFinite(payload.salary) ||
+        if (!createForm.checkValidity() || !isValidSalaryText(payload.salary) ||
             !payload.dateOfBirth || !payload.name || !payload.phone) {
             createForm.reportValidity();
             if (message) { message.textContent = "Complete all required fields with valid values."; message.classList.remove("d-none"); }
@@ -113,13 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     );
 
-    const salaryFormatter = new Intl.NumberFormat(
-        "en-US",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    );
 
     function showMessage(type, message) {
         if (!messageBox) {
@@ -354,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.dataset.phone;
 
         getInput(row, "salary").value =
-            Number(row.dataset.salary).toFixed(2);
+            row.dataset.salary;
     }
 
     function enterEditMode(row) {
@@ -465,14 +469,8 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        if (!Number.isFinite(contact.salary)) {
-            errors.push(
-                "Salary must be a valid number."
-            );
-        } else if (contact.salary < 0) {
-            errors.push(
-                "Salary cannot be negative."
-            );
+        if (!isValidSalaryText(contact.salary)) {
+            errors.push("Salary must be a non-negative decimal with up to 16 integer digits and 2 decimal places.");
         }
 
         return errors;
@@ -508,9 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     .trim(),
 
             salary:
-                rawSalary === ""
-                    ? Number.NaN
-                    : Number(rawSalary)
+                rawSalary
         };
 
         const validationErrors =
@@ -585,7 +581,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 contact.phone;
 
             row.dataset.salary =
-                contact.salary.toString();
+                contact.salary;
 
             getDisplay(row, "name").textContent =
                 contact.name;
@@ -628,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 row,
                 "salary"
             ).textContent =
-                salaryFormatter.format(contact.salary);
+                formatSalary(contact.salary);
 
             exitEditMode(row);
             applyClientTools();

@@ -13,14 +13,16 @@ jobs:
   build-and-unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
       - name: Restore
         run: dotnet restore PADO.ContactFlow.sln
       - name: Build Release
         run: dotnet build PADO.ContactFlow.sln -c Release --no-restore
+      - name: Validate browser JavaScript syntax
+        run: node --check src/PADO.ContactFlow.Web/wwwroot/js/contacts.js
       - name: Unit and MVC smoke tests (no SQL required)
         run: dotnet test PADO.ContactFlow.sln -c Release --no-build --filter 'Category!=SqlServer' --logger 'console;verbosity=normal'
 

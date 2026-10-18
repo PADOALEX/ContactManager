@@ -28,6 +28,7 @@
 - Server-side pagination (1–100 rows/page), plus clearly labeled instant filtering/sorting of the visible page.
 - Import UTF-8 CSV with/without BOM; strict validation, duplicate detection, row-level errors and **atomic transactions**.
 - Antiforgery protection on write operations, Dapper parameterized SQL and structured logging.
+- Exact `DECIMAL(18,2)` handling: salary stays decimal text in the browser and is parsed by C# `decimal`, never JavaScript floating point.
 - Unit, HTTP smoke and SQL Server integration tests, GitHub Actions CI, optional SQL Server Docker Compose.
 
 ### Feature overview

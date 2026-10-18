@@ -18,7 +18,7 @@ public sealed class ContactListViewComponent : ViewComponent
         ContactQueryParameters query)
     {
         var result =
-            await _contactRepository.GetPagedAsync(query);
+            await _contactRepository.GetPagedAsync(query, HttpContext.RequestAborted);
 
         var viewModel = new ContactListViewModel
         {
